@@ -1,11 +1,28 @@
+import fs from "node:fs";
 import { HermesClient, HermesAuthError } from "../src/lib/hermes";
+
+if (fs.existsSync(".env.local")) {
+  const content = fs.readFileSync(".env.local", "utf-8");
+  for (const line of content.split("\n")) {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith("#") && trimmed.includes("=")) {
+      const idx = trimmed.indexOf("=");
+      const key = trimmed.slice(0, idx).trim();
+      const val = trimmed.slice(idx + 1).trim();
+      if (!process.env[key]) {
+        process.env[key] = val;
+      }
+    }
+  }
+}
 
 async function main() {
   console.log("=== JARVIS HermesClient Live Verification ===");
 
-  const testKey = "jarvis-hermes-foundation-test-key-32ch";
+  const testKey = process.env.HERMES_API_KEY || "jarvis-hermes-foundation-test-key-32ch";
+  const baseUrl = process.env.HERMES_API_URL || "http://127.0.0.1:8642";
   const client = new HermesClient({
-    baseUrl: "http://127.0.0.1:8642",
+    baseUrl,
     apiKey: testKey,
     timeoutMs: 5000,
   });

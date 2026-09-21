@@ -28,9 +28,11 @@ async function runLiveVerification() {
   console.log("JARVIS PHASE 3 LIVE VERIFICATION — REAL HERMES BACKEND");
   console.log("==================================================");
 
+  const baseUrl = process.env.HERMES_API_URL || "http://127.0.0.1:8642";
+  const apiKey = process.env.HERMES_API_KEY || "jarvis-hermes-foundation-test-key-32ch";
   const client = new HermesClient({
-    baseUrl: "http://127.0.0.1:8642",
-    apiKey: "jarvis-hermes-foundation-test-key-32ch",
+    baseUrl,
+    apiKey,
     timeoutMs: 60000,
   });
 

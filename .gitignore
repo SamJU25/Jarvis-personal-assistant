@@ -29,6 +29,9 @@
 .jarvis/voice/models/
 .jarvis/voice/kokoro/.venv/
 .jarvis/voice/logs/
+__pycache__/
+*.py[cod]
+*$py.class
 *.db
 *.db-*
 *.sqlite
