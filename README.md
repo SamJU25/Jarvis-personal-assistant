@@ -157,6 +157,32 @@ To prevent autonomous agents from running unrestricted destructive commands, Her
 
 ---
 
+## 🗺️ Project Roadmap & Implementation Status
+
+The project follows a structured, milestone-driven roadmap. Each phase undergoes rigorous security checks, unit testing, and live runtime verification before progression:
+
+| Phase | Milestone Title | Status | Description |
+| :---: | :--- | :---: | :--- |
+| **01** | **Shell & Viewport Polish** | ✅ **Completed** | Cleaned up legacy demo cards, made application shell fit browser viewport without vertical scrolling, kept composer & voice controls accessible at all times. |
+| **02** | **Hermes Foundation** | ✅ **Completed** | Integrated official Nous Research Hermes repository (`v0.21.3`), verified local Python 3.11 environment, created typed `HermesClient`, contracts, error hierarchy, and health checks. |
+| **03** | **Hermes as Real Agent Backend** | ✅ **Completed** | Connected `HermesProvider` as default agent backend, pinned API-server toolsets to strict safe allowlist (`web`, `clarify`, `session_search`), verified session continuity, request cancellation, local Ollama fallback, and all 7 live runtime tests. |
+| **04** | **Google AI Studio / Gemini through Hermes** | ⏳ **Next Up** | Configure Google AI Studio Gemini provider natively through Hermes configuration (no hardcoded keys or logic in JARVIS), verify model discovery and reasoning turns. |
+| **05** | **Google Workspace Migration** | 📋 **Queued** | Migrate Gmail, Calendar, and Drive tools into Hermes-aligned toolsets while strictly maintaining human confirmation and draft-only email boundaries. |
+| **06** | **Multi-Provider Web Research** | 📋 **Queued** | Add deliberate, task-dependent web search and content extraction backends via Hermes rather than indiscriminate broadcasting. |
+| **07** | **Persistent Memory Alignment** | 📋 **Queued** | Harmonize local SQLite memory with Hermes session resources and long-term memory while maintaining secret rejection and authorization policies. |
+| **08** | **Skills & Controlled Learning** | 📋 **Queued** | Expand skill execution system and connect with Hermes skill discovery for autonomous workflow execution. |
+| **09** | **File & Document Intelligence** | 📋 **Queued** | Advanced local document intelligence, PDF parsing, and multi-file semantic analysis. |
+| **10** | **Browser Automation** | 📋 **Queued** | Integrate browser-control capabilities via Hermes browser extension/CDP integration with strict sandboxing. |
+| **11** | **Windows Computer Control** | 📋 **Queued** | Controlled desktop actions and accessibility automation with human-in-the-loop confirmation gates. |
+| **12** | **Messaging Integrations** | 📋 **Queued** | Multi-channel integration (Telegram, Matrix, Discord) with inbound/outbound confirmation boundaries. |
+| **13** | **Gemini Live (Real-Time Voice)** | 📋 **Queued** | True bidirectional streaming voice mode using `gemini-3.8-live` and `gemini-3.8-live-extended-thinking` with interruption handling and native audio streaming. |
+| **14** | **Screen & Webcam Vision** | 📋 **Queued** | Real-time visual perception, screen understanding, and multimodal input analysis. |
+| **15** | **Mark-LIV Experience Layer** | 📋 **Queued** | Enhanced cinematic telemetry, audio-reactive core animations, and advanced dashboard aesthetics. |
+| **16** | **Configuration Hub** | 📋 **Queued** | Replace legacy Settings shell with a centralized, compact Configuration Hub routing settings to Hermes. |
+| **17** | **Final Preflight & Hardening** | 📋 **Queued** | Comprehensive security audit, performance benchmarking, end-to-end regression testing, and production release. |
+
+---
+
 ## Verified Environment
 
 Tested and verified on Windows 11 with:
