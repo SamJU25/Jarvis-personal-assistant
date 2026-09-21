@@ -350,4 +350,4 @@ f:\Jarvis\
 
 ## License
 
-Licensed under the [Apache License 2.0](LICENSE).
+This project is source-available under a [Non-Commercial License](LICENSE). You are free to use, modify, and share it for personal, educational, and research purposes. **Commercial use is not permitted.** See the [LICENSE](LICENSE) file for details.
