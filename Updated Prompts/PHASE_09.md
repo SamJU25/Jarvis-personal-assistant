@@ -1,63 +1,34 @@
-# PHASE 9 — FILE + DOCUMENT INTELLIGENCE
+# PHASE 09 — GOOGLE WORKSPACE CONSOLIDATION
 
-GLOBAL RULES
-- Work on the existing JARVIS repository. Do not rebuild it.
-- Implement ONLY the numbered phase in this file. Do not continue into later phases.
-- Before coding, inspect the current repository and actual Hermes checkout.
-- Read JARVIS_MASTER_PROMPT.md, AGENTS.md, README.md, docs/ARCHITECTURE.md, docs/ROADMAP.md, docs/SECURITY.md, and relevant source/tests.
-- Actual source code is authoritative when docs are stale.
-- Do not invent Hermes APIs. Use the checked-out Hermes version and its current docs.
-- Preserve working Phase 9–12 confirmation, verification, diagnostics, voice, memory, and tool boundaries unless the phase explicitly changes them.
-- Never put API keys, OAuth tokens, refresh tokens, or secrets in browser/client code.
-- Never claim success without actual evidence.
-- Run relevant tests, lint, typecheck, build, and real runtime/browser verification.
-- Report NOT VERIFIED where a dependency/device/credential prevents real verification.
-- When this phase is verified, STOP. Do not implement the next phase.
+Use `MASTER_RULES.md`.
 
+## Objective
 
-Mark-LIV reference only:
-https://github.com/FatihMakes/Mark-LIV.git
+The project already contains Google Workspace functionality. Do not build another parallel implementation.
 
-## Goal
-Add safe local document/file capabilities in the existing JARVIS ToolRegistry.
+Compare current JARVIS Google capabilities with the Hermes-native Google Workspace capability available in the installed Hermes version.
 
-Do not copy Mark-LIV source. Mark-LIV is CC BY-NC 4.0.
+## Process
 
-## Initial formats
-- DOCX
-- PPTX
-- XLSX
-- PDF
-- TXT
-- Markdown
+1. Inventory current JARVIS Google features and tests.
+2. Inventory actual Hermes Google features/toolsets/approval behavior.
+3. Build a parity matrix.
+4. Migrate only capabilities where Hermes is sufficient and safer for the final architecture.
+5. Preserve any JARVIS-specific functionality that Hermes does not provide.
+6. Remove redundant code only after live parity verification.
 
-Use explicit typed tools such as:
-- read_docx / edit_docx / create_docx
-- read_pptx / edit_pptx / create_pptx
-- read_xlsx / edit_xlsx
-- read_pdf
-- inspect_file
+## Rule
 
-## Security
-- allowlisted roots
-- path normalization/containment
-- traversal protection
-- size/type limits
-- sanitized errors
-- no arbitrary shell/Python command execution
+Google remains an external capability, not a second agent core and not a memory source.
 
-## Writes
-Every file/document write:
-proposal → confirmation → execution → verification
+Do not delete working JARVIS Google code before parity is proven.
 
-Verify:
-- output exists
-- output opens/parses
-- intended change is present
+## Acceptance
 
-## Verify
-Real DOCX/PPTX/XLSX/PDF operations plus invalid path, traversal, size, cancellation, confirmation, and post-write verification.
-
-Run all quality gates.
+- Gmail/Calendar/Drive features remain functional.
+- no duplicate long-term Google implementation is left without a documented reason.
+- confirmation/authorization behavior is understood and preserved.
+- UI/debug events remain correct.
+- tests/build/live checks pass.
 
 STOP.

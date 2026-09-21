@@ -1,45 +1,49 @@
-# VERIFIED REFERENCES
+# VERIFIED REFERENCES — CHECKED 2026-09-22
 
-Hermes official repository:
-https://github.com/NousResearch/hermes-agent.git
+These references were reviewed while preparing v11. They guide architecture; they are not permission to copy unrelated implementations.
 
-Hermes API server:
-https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/api-server.md
+## Hermes
 
-Hermes web search/extract:
-https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/web-search.md
-
-Hermes Google Workspace:
-https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/skills/google-workspace.md
-
-Hermes Skills:
-https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/skills.md
-
-Hermes Memory:
-https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/memory.md
-
-Hermes Providers:
+AI Providers / custom OpenAI-compatible endpoint:
 https://github.com/NousResearch/hermes-agent/blob/main/website/docs/integrations/providers.md
 
-Mark-LIV:
-https://github.com/FatihMakes/Mark-LIV.git
+Configuration:
+https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/configuration.md
 
-Gemini Live API:
-https://ai.google.dev/gemini-api/docs/live-api/get-started-sdk
+Web Dashboard:
+https://github.com/hermes-agent-org/hermes/blob/main/website/docs/user-guide/features/web-dashboard.md
 
-Gemini Live tool use:
-https://ai.google.dev/gemini-api/docs/live-api/tools
+## FreeLLMAPI
 
+Project overview, automatic routing, streaming, tool calling, unified key, analytics:
+https://github.com/tashfeenahmed/freellmapi
 
-Current Hermes references used in v2:
-- API server: https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/api-server.md
-- Toolsets: https://github.com/NousResearch/hermes-agent/blob/main/website/docs/reference/toolsets-reference.md
-- Providers: https://github.com/NousResearch/hermes-agent/blob/main/website/docs/integrations/providers.md
-- Gemini: https://github.com/NousResearch/hermes-agent/blob/main/website/docs/guides/google-gemini.md
-- Memory: https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/memory.md
-- Skills: https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/skills.md
-- Dashboard: https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/web-dashboard.md
-- Profiles: https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/profiles.md
-- Gemini Live: https://ai.google.dev/gemini-api/docs/live-api/thinking
-- Gemini Live capabilities: https://ai.google.dev/gemini-api/docs/live-api/capabilities
-- Gemini Live best practices: https://ai.google.dev/gemini-api/docs/live-api/best-practices
+Environment / declarative config:
+https://github.com/tashfeenahmed/freellmapi/blob/main/.env.example
+
+Agent clients / Hermes setup:
+https://github.com/tashfeenahmed/freellmapi/blob/main/docs/en/clients/01-agent-clients.md
+
+## OpenJarvis
+
+Architecture / EventBus / primitives:
+https://github.com/open-jarvis/OpenJarvis/blob/main/docs/architecture/overview.md
+
+## Mark-LIV
+
+Product/interaction reference:
+https://github.com/FatihMakes/Mark-LIV
+
+## JARVIS current code audit references
+
+Settings shell:
+https://raw.githubusercontent.com/SamJU25/Jarvis-personal-assistant/main/src/components/settings/settings-shell.tsx
+
+JARVIS shell:
+https://raw.githubusercontent.com/SamJU25/Jarvis-personal-assistant/main/src/components/jarvis/jarvis-shell.tsx
+
+Debug shell:
+https://raw.githubusercontent.com/SamJU25/Jarvis-personal-assistant/main/src/components/debug/debug-shell.tsx
+
+Hermes provider:
+https://raw.githubusercontent.com/SamJU25/Jarvis-personal-assistant/main/src/lib/agent/providers/hermes-provider.ts

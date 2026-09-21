@@ -1,55 +1,59 @@
-# PHASE 15 — MARK-LIV-INSPIRED EXPERIENCE LAYER
+# PHASE 15 — SCHEDULER + PROACTIVE ASSISTANT
 
-GLOBAL RULES
-- Work on the existing JARVIS repository. Do not rebuild it.
-- Implement ONLY the numbered phase in this file. Do not continue into later phases.
-- Before coding, inspect the current repository and actual Hermes checkout.
-- Read JARVIS_MASTER_PROMPT.md, AGENTS.md, README.md, docs/ARCHITECTURE.md, docs/ROADMAP.md, docs/SECURITY.md, and relevant source/tests.
-- Actual source code is authoritative when docs are stale.
-- Do not invent Hermes APIs. Use the checked-out Hermes version and its current docs.
-- Preserve working Phase 9–12 confirmation, verification, diagnostics, voice, memory, and tool boundaries unless the phase explicitly changes them.
-- Never put API keys, OAuth tokens, refresh tokens, or secrets in browser/client code.
-- Never claim success without actual evidence.
-- Run relevant tests, lint, typecheck, build, and real runtime/browser verification.
-- Report NOT VERIFIED where a dependency/device/credential prevents real verification.
-- When this phase is verified, STOP. Do not implement the next phase.
+Use `MASTER_RULES.md`.
 
+## Objective
 
-Mark-LIV:
-https://github.com/FatihMakes/Mark-LIV.git
+Add durable scheduled tasks that launch real Hermes runs under the same policy as interactive tasks.
 
-PDF reference:
-Use the uploaded Build-Your-Own-Jarvis prompt pack as a behavioral/design reference only. Do not rebuild the JARVIS foundation from it.
+The user should be able to say naturally:
 
-## Goal
-Add selected high-value UX ideas without copying Mark-LIV code/assets.
+- “Remind me tomorrow at 8 PM to finish my project.”
+- “Remind me every weekday at 9 AM.”
+- “Cancel that reminder.”
+- “Move my reminder to 10.”
 
-Candidates:
-- expressive avatar/core states
-- lip-sync/speaking visualization
-- runtime self-knowledge
-- dynamic results panel
-- clipboard intelligence
-- model-switch spoken feedback
-- session summaries
-- opt-in proactive check-ins
+## Required
 
-## Licensing rule
-Mark-LIV states CC BY-NC 4.0. Implement JARVIS-native equivalents. Do not copy its source, assets, plaintext credential pattern, or PyQt application architecture.
+- persistent schedule
+- timezone correctness
+- run history
+- cancellation/editing
+- duplicate-run protection
+- delivery/channel abstraction
+- explicit channel target
+- retry policy
+- approval boundary
 
-## Proactive features
-If implemented:
-- explicit opt-in
-- easy disable
-- rate-limited
-- transparent
-- no hidden surveillance
+## Telegram
 
-## Model switching
-Validate exact configured provider/model IDs.
-Never silently substitute a "nearest" model.
+Telegram is the preferred first remote reminder channel if the installed Hermes version supports it.
 
-## Verify
-Avatar state, model switching, invalid model refusal, personalization, proactive opt-in/disable, no hidden actions.
+A reminder should be able to deliver to the user’s authenticated Telegram chat/session without creating a second agent.
+
+Do not assume a channel used to talk to JARVIS can automatically message arbitrary third parties.
+
+## Context
+
+Scheduled runs start in a fresh execution context when the platform behaves that way. Persist the minimum required context and retrieve durable knowledge from Obsidian rather than depending on an old conversation transcript being present.
+
+## Safety
+
+A scheduled task follows the same capability permissions, confirmation policy, verification rules, and idempotency rules as an interactive run.
+
+Do not let background execution bypass user policy.
+
+## Acceptance
+
+Live-verify:
+
+1. create one-time reminder
+2. persist it
+3. deliver through Telegram when configured
+4. cancel it
+5. edit/reschedule it
+6. restart the server and confirm schedule persistence
+7. prove no duplicate delivery
+8. prove the run uses the normal Hermes/capability pipeline
 
 STOP.

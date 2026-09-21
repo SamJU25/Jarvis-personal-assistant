@@ -1,65 +1,191 @@
-# PHASE 8 — SKILLS + CONTROLLED LEARNING
+# PHASE 08 — SPECIALIST AGENT ORCHESTRATION
 
-GLOBAL RULES
-- Work on the existing JARVIS repository. Do not rebuild it.
-- Implement ONLY the numbered phase in this file. Do not continue into later phases.
-- Before coding, inspect the current repository and actual Hermes checkout.
-- Read JARVIS_MASTER_PROMPT.md, AGENTS.md, README.md, docs/ARCHITECTURE.md, docs/ROADMAP.md, docs/SECURITY.md, and relevant source/tests.
-- Actual source code is authoritative when docs are stale.
-- Do not invent Hermes APIs. Use the checked-out Hermes version and its current docs.
-- Preserve working Phase 9–12 confirmation, verification, diagnostics, voice, memory, and tool boundaries unless the phase explicitly changes them.
-- Never put API keys, OAuth tokens, refresh tokens, or secrets in browser/client code.
-- Never claim success without actual evidence.
-- Run relevant tests, lint, typecheck, build, and real runtime/browser verification.
-- Report NOT VERIFIED where a dependency/device/credential prevents real verification.
-- When this phase is verified, STOP. Do not implement the next phase.
+Use `MASTER_RULES.md` and `UI_GUIDE.md`.
 
+## Objective
 
-Hermes skills reference:
-https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/skills.md
+Let the Hermes core delegate suitable work to specialist child agents instead of forcing one agent to perform every task alone.
 
-## Goal
-Let JARVIS improve at repeatable workflows without unrestricted self-modification.
+Use Hermes's supported delegation mechanism from the installed version. Do not build a second agent engine.
 
-Memory = WHAT.
-Skills = HOW.
+## Target architecture
 
-## Safety
-Enable:
-skills.write_approval = true
-(or current equivalent)
+```text
+JARVIS
+  ↓
+HERMES CORE
+  ├─ direct execution for simple tasks
+  └─ delegation when beneficial
+        ├─ research specialist
+        ├─ coding specialist
+        ├─ memory/knowledge specialist
+        ├─ productivity specialist
+        └─ temporary task-specific specialist
+```
 
-Do not allow the agent to:
-- edit JARVIS source
-- alter security policy
-- grant itself tools
-- expand permissions
-- silently rewrite active skills
+## Inspect first
 
-## Skill creation
-Create a skill only when a workflow is:
-- non-trivial
-- reusable
-- stable
-- useful
+Inspect the installed Hermes implementation for:
 
-Workflow:
-discover → propose → user approval → save → reuse
+- delegation / child-agent tool
+- child-agent lifecycle
+- parallel delegation limits
+- model override support
+- tool/skill inheritance
+- child-agent session isolation
+- cancellation
+- result aggregation
 
-## Corrections
-A stable preference belongs in memory.
-A procedural rule belongs in a skill.
-Avoid needless duplication.
+Do not invent delegation APIs.
 
-## Verify
-- skill proposal
-- approve
-- reject
-- reuse
-- modify after user correction
-- delete approval
-- no skill explosion
+## JARVIS specialist registry
 
-Run all quality gates.
+Create a small declarative registry for reusable specialist roles without creating separate agent runtimes.
 
-STOP.
+Each specialist definition may include:
+
+- stable ID
+- display name
+- role/instructions
+- preferred routing profile if supported
+- allowed skills
+- allowed capabilities/tools
+- maximum execution time
+- concurrency limit
+- whether it is user-visible
+
+Initial roles:
+
+- `research`
+- `coding`
+- `productivity`
+- `memory`
+- `communications`
+
+Only add a role when it has a real use in the installed capability set.
+
+## Delegation policy
+
+Keep it simple.
+
+Direct Hermes execution for:
+
+- simple questions
+- small tool calls
+- deterministic commands
+- quick conversational requests
+
+Delegate when:
+
+- the task naturally separates into independent subtasks
+- parallel research is useful
+- a specialist tool/skill boundary gives a better result
+- the main agent would otherwise become unnecessarily complex
+
+Do not delegate merely to make the UI look sophisticated.
+
+## Temporary specialists
+
+Support task-scoped specialist creation where Hermes supports it.
+
+Example:
+
+`"Create a specialist to inspect this repository's architecture."`
+
+The temporary specialist must have:
+
+- explicit objective
+- bounded tools/capabilities
+- bounded lifetime
+- explicit output contract
+- no access beyond the parent task's authorization
+
+Do not persist a temporary specialist as a permanent service.
+
+## Context
+
+Children do not automatically inherit the entire parent conversation unless Hermes does so natively.
+
+Pass only what the child needs:
+
+- task objective
+- relevant context
+- relevant memory references
+- relevant files/data
+- required skill
+- output expectations
+- constraints
+
+Do not duplicate the entire parent transcript unnecessarily.
+
+## Parallelism
+
+Use Hermes's supported parallel delegation when useful.
+
+All child runs must remain correlated to the parent:
+
+- JARVIS session ID
+- JARVIS parent run ID
+- Hermes parent run ID
+- child run ID
+- specialist ID
+
+## Cancellation
+
+Cancelling the parent task must cancel child work where the Hermes version supports it.
+
+A stale child result must never resurrect a cancelled parent run.
+
+## UI
+
+Only show specialists when delegation actually occurs.
+
+Example:
+
+```text
+HERMES
+├─ Research Specialist    ✓
+├─ Memory Specialist      ✓
+└─ Synthesis              ●
+```
+
+Do not expose private chain-of-thought.
+
+Show safe lifecycle data only.
+
+Settings should expose the specialist registry as read-only status initially; later phases may add simple enable/disable controls.
+
+## FreeLLMAPI integration
+
+Do not choose concrete upstream models in JARVIS.
+
+If a routing profile is supported, the specialist may request a high-level profile such as fast/reasoning/coding.
+
+FreeLLMAPI remains the actual provider/model router in the later production architecture.
+
+## Acceptance tests
+
+1. Simple task runs directly without delegation.
+2. Delegatable task creates a specialist.
+3. Two independent specialists can run concurrently when supported.
+4. Parent receives structured child results.
+5. Parent synthesizes the final response.
+6. Child tool permissions do not exceed parent permissions.
+7. Parent cancellation stops child work.
+8. No stale child result updates a cancelled parent.
+9. Specialist activity appears in the live event stream.
+10. Existing confirmation/verification still apply to child-triggered side effects.
+
+## Scope stop
+
+Do NOT implement:
+
+- a new agent framework
+- permanent autonomous agents outside Hermes
+- specialist chat UIs
+- recursive unbounded delegation
+- autonomous specialist self-creation without a bounded parent task
+
+## Done
+
+Run tests, lint, typecheck, build, and live delegation verification. Report exact evidence. STOP.

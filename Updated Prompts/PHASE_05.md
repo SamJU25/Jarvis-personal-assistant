@@ -1,66 +1,221 @@
-# PHASE 5 — GOOGLE WORKSPACE MIGRATION TO HERMES
+# PHASE 05 — HERMES + FREELLMAPI + FUNCTIONAL SETTINGS CONFIGURATION
 
-GLOBAL RULES
-- Work on the existing JARVIS repository. Do not rebuild it.
-- Implement ONLY the numbered phase in this file. Do not continue into later phases.
-- Before coding, inspect the current repository and actual Hermes checkout.
-- Read JARVIS_MASTER_PROMPT.md, AGENTS.md, README.md, docs/ARCHITECTURE.md, docs/ROADMAP.md, docs/SECURITY.md, and relevant source/tests.
-- Actual source code is authoritative when docs are stale.
-- Do not invent Hermes APIs. Use the checked-out Hermes version and its current docs.
-- Preserve working Phase 9–12 confirmation, verification, diagnostics, voice, memory, and tool boundaries unless the phase explicitly changes them.
-- Never put API keys, OAuth tokens, refresh tokens, or secrets in browser/client code.
-- Never claim success without actual evidence.
-- Run relevant tests, lint, typecheck, build, and real runtime/browser verification.
-- Report NOT VERIFIED where a dependency/device/credential prevents real verification.
-- When this phase is verified, STOP. Do not implement the next phase.
+Use `MASTER_RULES.md` and `UI_GUIDE.md`.
 
+## Objective
 
-Hermes:
-https://github.com/NousResearch/hermes-agent.git
+Make the production inference path:
 
-## Goal
-Migrate Google Workspace capability toward Hermes only after real verification. Do not delete the existing JARVIS implementation first.
+`JARVIS → Hermes → FreeLLMAPI → automatic upstream routing`
 
-Hermes currently has a Google Workspace skill covering Gmail, Calendar, Drive, Docs, Sheets, and Contacts.
+and make Hermes + FreeLLMAPI genuinely configurable from the JARVIS Settings UI.
 
-Reference:
-https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/skills/google-workspace.md
+The user should not normally open the Hermes dashboard or FreeLLMAPI dashboard to run JARVIS.
 
-## Audit current JARVIS Google
-Inspect:
-- Gmail
-- Calendar
-- Drive
-- Docs
-- OAuth/config
-- GWS wrapper
-- tests
-- confirmation
-- verification
+## Inspect first
 
-Classify each:
-KEEP / ADAPT / REPLACE / REMOVE LATER
+Inspect the actual installed versions and supported controls:
 
-## Configure Hermes Google Workspace
-Use current Hermes-supported OAuth.
-Keep all tokens/secrets server-side.
+### Hermes
+- current `config.yaml` format
+- custom OpenAI-compatible provider support
+- supported model/base_url/api_key fields
+- runtime reload/restart behavior
+- model/capability APIs
+- current gateway/run API
 
-## Real read tests
-- Gmail search/read
-- Calendar
-- Drive search/read
-- Docs
-- Sheets/Contacts where configured
+### FreeLLMAPI
+- `/v1` API behavior
+- `model=auto` and `auto:*` behavior
+- routing strategy
+- tool calling
+- streaming
+- health/readiness
+- admin/auth model
+- unified key behavior
+- supported declarative startup config
+- supported config reload/restart behavior
 
-## Write tests
-Any Google write remains:
-proposal → approval → execution → verification
+Use the installed versions as source of truth.
 
-Never allow Hermes Google writes to bypass JARVIS confirmation.
+## Production inference rule
 
-## Cleanup
-Only remove old JARVIS Google code after the Hermes replacement is actually verified and unused code is identified by import/usage search.
+The desired path is:
 
-Run all quality gates and real Google verification.
+`Browser → JARVIS → Hermes → FreeLLMAPI → upstream model/provider`
+
+Do not let the browser call FreeLLMAPI directly.
+Do not add direct Gemini/OpenAI/Groq/etc. calls to JARVIS's production agent path.
+Do not create another model router.
+
+## Hermes configuration
+
+Configure the Hermes custom OpenAI-compatible endpoint using the actual supported config mechanism.
+
+Target shape:
+
+```yaml
+model:
+  provider: custom
+  base_url: <FreeLLMAPI /v1>
+  default: auto
+```
+
+Use the exact installed Hermes syntax; do not blindly copy this example if the version differs.
+
+Secrets must be server-side.
+
+## FreeLLMAPI configuration
+
+FreeLLMAPI supports declarative startup configuration via `FREEAPI_CONFIG_PATH` or `FREEAPI_CONFIG_JSON` in current releases.
+
+Prefer the supported server-side mechanism for provider credentials and routing configuration.
+
+If the installed version exposes an authenticated management API, use it.
+If not, use the supported declarative config path and explicitly apply/reload/restart as required.
+
+Never fake hot reload.
+
+## Settings UI — mandatory
+
+Implement the first functional version of:
+
+### Hermes Core card
+
+Show real:
+- connection status
+- version if available
+- session readiness
+- run readiness
+- capability count
+- skill count
+- delegation status
+
+Actions:
+- Test Connection
+- Refresh Capabilities
+- Refresh Models
+
+### Inference Gateway card
+
+Show real:
+- FreeLLMAPI status
+- base URL (safe)
+- routing strategy
+- streaming support
+- tool-calling support
+- last health check
+- last routed provider/model when verified
+- last latency when available
+
+Actions:
+- Test Gateway
+- Test Streaming
+- Test Tool Calling
+- Refresh Models
+
+### Provider credentials
+
+Show only:
+- provider name
+- configured/not configured
+- health status
+- last health check
+
+Allow entry of a new provider key through a secure server-side flow.
+Never return stored keys.
+Never put them in browser storage.
+Never log them.
+
+If the gateway only supports key management through its own authenticated admin surface, expose the smallest safe server-side integration and an explicit “Open gateway administration” link rather than pretending JARVIS can manage unsupported operations.
+
+## Settings data architecture
+
+Implement:
+
+`GET /api/settings/snapshot`
+`GET /api/settings/events` (SSE)
+
+plus existing-repo-compatible write/test endpoints.
+
+Use validated schemas:
+- `SystemStatusSnapshot`
+- `SettingsEvent`
+- Hermes settings input/result
+- Inference settings input/result
+
+## Live updates
+
+The Settings page must NOT poll Hermes/FreeLLMAPI directly.
+
+Use one JARVIS server-side health/config observer that emits normalized settings events.
+
+Browser flow:
+
+`snapshot → SSE → reducer/store`
+
+On reconnect:
+- fetch snapshot
+- reconnect stream
+- reconcile by revision/event IDs
+- avoid duplicates
+
+## Apply flow
+
+Every setting change must show:
+
+`Idle → Applying → Applied/Failed → Verified`
+
+On success:
+1. re-read actual configuration
+2. re-probe the service
+3. update snapshot
+4. emit settings event
+
+If the service requires restart, show that honestly and expose a safe Restart/Reload action where the installed environment supports it.
+
+## Automatic routing
+
+JARVIS may request a high-level routing profile if supported.
+JARVIS must not pick a concrete upstream provider/model for normal operation.
+
+The default user experience is:
+
+`Routing: Automatic`
+
+## Failure behavior
+
+If FreeLLMAPI is down:
+- Settings shows `Unavailable`
+- agent request shows a truthful gateway failure
+- no direct-provider bypass
+
+If one upstream provider fails, allow FreeLLMAPI to perform its own fallback.
+
+## Acceptance
+
+1. Hermes is connected through FreeLLMAPI.
+2. `model=auto` or installed equivalent works.
+3. streaming works.
+4. tool calls work.
+5. multi-step Hermes runs still work.
+6. Settings shows real live state.
+7. Test Connection performs a real check.
+8. changing a supported setting changes actual runtime/configuration state.
+9. saved state is re-read and verified.
+10. provider keys never appear in browser responses/logs.
+11. no direct upstream provider fallback exists in JARVIS.
+
+## Live verification
+
+Use the real Hermes and FreeLLMAPI instances.
+
+Prove:
+
+`JARVIS → Hermes → FreeLLMAPI → upstream`
+
+Then verify the JARVIS Settings UI sees the actual state change and returns to the correct live status.
+
+Run tests, lint, typecheck, build, and live verification.
 
 STOP.

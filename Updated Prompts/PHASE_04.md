@@ -1,64 +1,136 @@
-# PHASE 4 — GOOGLE AI STUDIO / GEMINI THROUGH HERMES
+# PHASE 04 — HERMES CORE + OBSIDIAN + REAL-TIME EVENT/UI FOUNDATION
 
-GLOBAL RULES
-- Work on the existing JARVIS repository. Do not rebuild it.
-- Implement ONLY the numbered phase in this file. Do not continue into later phases.
-- Before coding, inspect the current repository and actual Hermes checkout.
-- Read JARVIS_MASTER_PROMPT.md, AGENTS.md, README.md, docs/ARCHITECTURE.md, docs/ROADMAP.md, docs/SECURITY.md, and relevant source/tests.
-- Actual source code is authoritative when docs are stale.
-- Do not invent Hermes APIs. Use the checked-out Hermes version and its current docs.
-- Preserve working Phase 9–12 confirmation, verification, diagnostics, voice, memory, and tool boundaries unless the phase explicitly changes them.
-- Never put API keys, OAuth tokens, refresh tokens, or secrets in browser/client code.
-- Never claim success without actual evidence.
-- Run relevant tests, lint, typecheck, build, and real runtime/browser verification.
-- Report NOT VERIFIED where a dependency/device/credential prevents real verification.
-- When this phase is verified, STOP. Do not implement the next phase.
+Use `MASTER_RULES.md` and `UI_GUIDE.md`.
 
+## Objective
 
-Hermes:
-https://github.com/NousResearch/hermes-agent.git
+Turn Hermes into the actual JARVIS agent core and make the existing UI consume real live run events instead of simulating an assistant around a provider call.
 
-## Goal
-Add Google AI Studio Gemini as a provider through Hermes. Do not hard-code Gemini into JARVIS.
+Obsidian becomes the canonical durable-memory and skill source.
 
-## Inspect current Hermes Gemini provider
-Verify current provider configuration and environment variable names from the checked-out Hermes version.
-Current Hermes docs list Google/Gemini support and GOOGLE_API_KEY/GEMINI_API_KEY.
+## Inspect first
 
-Reference:
-https://github.com/NousResearch/hermes-agent/blob/main/website/docs/integrations/providers.md
+Audit the actual local checkout and installed Hermes version:
 
-## Implement
+- `src/lib/agent/`
+- `src/lib/hermes/`
+- `src/lib/contracts/`
+- `src/lib/tools/`
+- `src/lib/confirmation/`
+- `src/lib/verification/`
+- `src/lib/skills/`
+- `src/lib/memory/`
+- `src/lib/obsidian/`
+- agent API routes
+- existing reducer/state
+- current settings UI
+- debug UI
+- voice client/streaming code
 
-### User-selectable provider and model
-Hermes currently supports authenticated provider/model selection at the API level. The current API documentation exposes `/api/model/options` for a richer authenticated model/provider picker and supports `provider`, `model`, and `model_options` on `/v1/runs`, `/v1/responses`, and other request paths.
+Verify the actual Hermes API for:
+- Runs
+- sessions
+- SSE/events
+- approvals
+- stop/cancel
+- skill discovery
+- external skill directories
 
-JARVIS must NEVER hard-code a fixed Gemini model list.
-Discover available/configured models from the running Hermes instance or the Hermes Dashboard.
-When a user chooses a model/provider, pass the exact configured provider/model to Hermes or delegate configuration to Hermes as appropriate.
-Never silently substitute a nearby model if the requested model is unavailable.
+## Core refactor
 
-Configure Hermes for Gemini.
+Replace the current provider-centric path with:
 
-Keep Gemini API credentials:
-- server-side
-- outside browser bundles
-- out of logs
+`JARVIS → Hermes Run → Hermes owns the loop → JARVIS governed capabilities → Hermes continues → terminal state`
 
-JARVIS must remain provider-agnostic:
-JARVIS → Hermes → configured provider/model
+Do not keep a parallel TypeScript reasoning loop.
 
-## Verify
-- real Gemini request through Hermes
-- model selection
-- provider failure
-- timeout
+Remove the old one-tool/Turn-2 limitation from the active architecture.
+
+## Stable sessions
+
+Map a JARVIS conversation to one Hermes session.
+
+Do not derive Hermes session IDs from individual request IDs.
+
+## Real-time event foundation
+
+Normalize Hermes lifecycle/events into the existing JARVIS event contract and reducer.
+
+Build the server-side EventBus/dispatcher needed so one event can feed:
+- main UI
+- activity timeline
+- settings status
 - diagnostics
-- latency
+- trace hooks
+- voice status
 
-Do not replace Ollama.
-Do not implement Gemini Live here.
+Do not expose hidden chain-of-thought.
 
-Run all quality gates.
+## UI changes in this phase
+
+Keep the existing visual shell.
+
+Add the minimum functional live-state plumbing needed for:
+
+- current run status
+- current skill/tool activity
+- streamed assistant text
+- cancellation
+- confirmation state
+- live activity timeline
+- real backend health snapshot
+
+The existing Settings page may still be incomplete; do not build the full control center yet. Phase 5 will implement the Hermes/FreeLLMAPI settings surface and later phases extend it.
+
+However, the data contracts created here must support the final `UI_GUIDE.md` design.
+
+## Obsidian
+
+Use `OBSIDIAN_VAULT_PATH`.
+
+Canonical durable memory:
+`AI/Memory/`
+
+Canonical skill source:
+`AI/Skills/`
+
+Use the installed Hermes SKILL.md format.
+
+Do not make Hermes or SQLite a second authoritative durable memory store.
+
+## Safety
+
+Keep the existing Tool Registry, confirmation and verification systems.
+
+Do not enable unrestricted terminal, code execution, filesystem, browser, or computer-control tools.
+
+Do not silently fall back to Ollama or Command Code.
+
+## Acceptance
+
+1. One JARVIS session maps to one Hermes session.
+2. A single run can perform multiple tool steps.
+3. Hermes events reach the JARVIS event stream.
+4. The existing UI reducer updates from real events.
+5. streamed text reaches the UI without duplication.
+6. cancellation reaches the actual Hermes run.
+7. Obsidian memory and skills are reachable through the intended boundary.
+8. confirmation and verification remain authoritative.
+
+## Live verification
+
+Use the real Hermes server and real configured Obsidian vault.
+
+Verify:
+- new session
+- continued session
+- multi-step run
+- live event stream
+- streamed text
+- cancellation
+- Obsidian memory retrieval
+- Obsidian skill discovery
+
+Run tests, lint, typecheck, build, then live verification.
 
 STOP.
