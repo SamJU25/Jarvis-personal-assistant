@@ -350,4 +350,4 @@ f:\Jarvis\
 
 ## License
 
-Private repository. All rights reserved.
+Licensed under the [Apache License 2.0](LICENSE).
