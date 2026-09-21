@@ -1,5 +1,6 @@
 import type { AgentProvider, AgentRequest, AgentRun, AgentDecision } from "@/lib/contracts/provider";
 import type { AgentEvent } from "@/lib/contracts/event";
+import type { AgentApiFrame } from "@/lib/contracts/agent-api";
 import { AgentRuntimeError } from "@/lib/agent/errors";
 import { toolCallRequestSchema } from "@/lib/contracts/tool";
 import {
@@ -12,6 +13,8 @@ import {
 import { HermesClient } from "@/lib/hermes/client";
 import { HermesConnectionError, HermesTimeoutError, HermesAuthError } from "@/lib/hermes/errors";
 import type { HermesChatMessage } from "@/lib/contracts/hermes";
+import { specialistRegistry } from "@/lib/specialist/registry";
+import type { SpecialistRun } from "@/lib/contracts/specialist";
 
 class EventQueue implements AsyncIterable<AgentEvent> {
   private values: AgentEvent[] = [];
@@ -263,6 +266,255 @@ export class HermesProvider implements AgentProvider {
         abortController.abort();
       },
     };
+  }
+
+  /**
+   * Executes a full Hermes Run (POST /v1/runs) with real-time SSE event streaming
+   * (GET /v1/runs/{id}/events), yielding normalized AgentApiFrames.
+   * Hermes natively owns the multi-step execution loop.
+   */
+  async *executeRun(options: {
+    input: string;
+    conversation: Array<{ role: string; content: string }>;
+    sessionId: string;
+    instructions: string;
+    signal?: AbortSignal;
+  }): AsyncGenerator<AgentApiFrame> {
+    const startTime = Date.now();
+    let runId: string | undefined;
+
+    const onAbort = () => {
+      if (runId) {
+        this.client.stopRun(runId).catch(() => {});
+      }
+    };
+
+    if (options.signal) {
+      options.signal.addEventListener("abort", onAbort, { once: true });
+    }
+
+    try {
+      if (options.signal?.aborted) {
+        throw new AgentRuntimeError("cancelled");
+      }
+
+      yield {
+        type: "event",
+        event: {
+          id: crypto.randomUUID(),
+          type: "agent_started",
+          timestamp: new Date().toISOString(),
+          label: "Hermes run started",
+        },
+      };
+
+      const runResponse = await this.client.createRun(
+        {
+          input: options.input,
+          session_id: options.sessionId,
+          instructions: options.instructions,
+        },
+        { signal: options.signal }
+      );
+
+      runId = runResponse.run_id;
+
+      // Stream events from /v1/runs/{run_id}/events
+      let finalResultFrame: AgentApiFrame | undefined;
+      const specialistRuns = new Map<string, SpecialistRun>();
+
+      for await (const sseEvent of this.client.streamRunEvents(runId, options.signal)) {
+        if (options.signal?.aborted) {
+          throw new AgentRuntimeError("cancelled");
+        }
+
+        const evName = sseEvent.event;
+        const data = typeof sseEvent.data === "object" && sseEvent.data !== null ? sseEvent.data : {};
+
+        if (evName === "tool.started") {
+          const toolName = (data.tool as string) || "tool";
+          yield {
+            type: "event",
+            event: {
+              id: crypto.randomUUID(),
+              type: "tool_started",
+              timestamp: new Date().toISOString(),
+              label: `Executing tool: ${toolName}`,
+            },
+          };
+        } else if (evName === "tool.completed") {
+          const toolName = (data.tool as string) || "tool";
+          const hasError = Boolean(data.error);
+          yield {
+            type: "event",
+            event: {
+              id: crypto.randomUUID(),
+              type: hasError ? "tool_failed" : "tool_completed",
+              timestamp: new Date().toISOString(),
+              label: `Tool ${toolName} ${hasError ? "failed" : "completed"}`,
+            },
+          };
+        } else if (evName === "subagent.start" || evName === "subagent.spawn_requested") {
+          const subagentId = String(data.subagent_id || `sa-${Date.now()}`);
+          const goal = String(data.goal || (data.preview as string) || "Delegated task");
+          const matchedSpec = specialistRegistry.findBestSpecialist(goal);
+          const displayName = matchedSpec?.displayName || "Specialist";
+          const specRun: SpecialistRun = {
+            subagentId,
+            specialistId: matchedSpec?.id || "research",
+            displayName,
+            parentRunId: runId,
+            hermesParentRunId: runId,
+            sessionId: options.sessionId,
+            goal,
+            status: "running",
+            startedAt: new Date().toISOString(),
+            toolCount: 0,
+          };
+          specialistRuns.set(subagentId, specRun);
+          yield {
+            type: "event",
+            event: {
+              id: crypto.randomUUID(),
+              type: "specialist_started",
+              timestamp: new Date().toISOString(),
+              label: `Specialist started: ${displayName} ("${goal.slice(0, 50)}")`,
+            },
+          };
+        } else if (evName === "subagent.complete") {
+          const subagentId = String(data.subagent_id || "");
+          const specRun = specialistRuns.get(subagentId);
+          const rawStatus = (data.status as string) || "completed";
+          const isFailed = rawStatus === "failed" || rawStatus === "error";
+          const isCancelled = rawStatus === "cancelled" || rawStatus === "interrupted";
+          if (specRun) {
+            specRun.status = isCancelled ? "cancelled" : isFailed ? "failed" : "completed";
+            specRun.completedAt = new Date().toISOString();
+            specRun.summary = typeof data.summary === "string" ? data.summary : undefined;
+            specRun.durationMs = typeof data.duration_seconds === "number" ? Math.round(data.duration_seconds * 1000) : undefined;
+            specRun.toolCount = typeof data.tool_count === "number" ? data.tool_count : 0;
+          }
+          yield {
+            type: "event",
+            event: {
+              id: crypto.randomUUID(),
+              type: isFailed ? "specialist_failed" : isCancelled ? "specialist_cancelled" : "specialist_completed",
+              timestamp: new Date().toISOString(),
+              label: `Specialist ${isFailed ? "failed" : isCancelled ? "cancelled" : "completed"}: ${specRun?.displayName || "Specialist"}`,
+            },
+          };
+        } else if (evName === "message.delta") {
+          const deltaText = (data.content as string) || (data.text as string) || (data.delta as string) || "";
+          if (deltaText) {
+            yield { type: "delta", text: deltaText };
+          }
+        } else if (evName === "run.completed") {
+          const rawOutput = (data.output as string) || "";
+          const decision = normalizeHermesDecision(rawOutput);
+          const durationMs = Math.max(1, Date.now() - startTime);
+
+          if (decision.type === "direct") {
+            if (specialistRuns.size > 0) {
+              const lines: string[] = ["HERMES"];
+              const list = Array.from(specialistRuns.values());
+              list.forEach((s) => {
+                const prefix = "├─ ";
+                const icon = s.status === "completed" ? "✓" : s.status === "failed" ? "✗" : "●";
+                lines.push(`${prefix}${s.displayName.padEnd(24)} ${icon}`);
+              });
+              lines.push(`└─ Synthesis                 ✓`);
+
+              const specialistCard: ResultCard = {
+                id: `specialists-${Date.now()}`,
+                type: "generic",
+                label: "Orchestration",
+                title: "Specialist Team",
+                body: lines.join("\n"),
+              };
+              decision.result.cards = [specialistCard, ...decision.result.cards];
+            }
+
+            finalResultFrame = {
+              type: "result",
+              result: decision.result,
+              meta: {
+                provider: this.name,
+                model: "hermes-agent",
+                durationMs,
+              },
+            };
+          } else {
+            finalResultFrame = {
+              type: "result",
+              result: {
+                speech: `Executing action: ${decision.request.toolId}.`,
+                title: "Action Proposed",
+                state: "complete",
+                cards: [
+                  {
+                    id: `action-${Date.now()}`,
+                    type: "generic",
+                    label: "Action",
+                    title: decision.request.toolId,
+                    body: JSON.stringify(decision.request.arguments, null, 2),
+                  },
+                ],
+                sources: [],
+              },
+              meta: {
+                provider: this.name,
+                model: "hermes-agent",
+                durationMs,
+              },
+            };
+          }
+        } else if (evName === "run.failed") {
+          const errorMsg = (data.error as string) || "Hermes run failed.";
+          throw new AgentRuntimeError("server", errorMsg);
+        } else if (evName === "run.cancelled" || evName === "run.interrupted") {
+          throw new AgentRuntimeError("cancelled");
+        }
+      }
+
+      if (finalResultFrame) {
+        yield finalResultFrame;
+      } else {
+        const status = await this.client.getRunStatus(runId);
+        const durationMs = Math.max(1, Date.now() - startTime);
+        if (status.status === "completed" && status.output) {
+          const decision = normalizeHermesDecision(typeof status.output === "string" ? status.output : JSON.stringify(status.output));
+          yield {
+            type: "result",
+            result: decision.type === "direct" ? decision.result : {
+              speech: "Task completed.",
+              title: "Result",
+              state: "complete",
+              cards: [],
+              sources: [],
+            },
+            meta: {
+              provider: this.name,
+              model: "hermes-agent",
+              durationMs,
+            },
+          };
+        } else if (status.status === "failed") {
+          throw new AgentRuntimeError("server", status.error || "Hermes run failed.");
+        } else if (status.status === "cancelled") {
+          throw new AgentRuntimeError("cancelled");
+        } else {
+          throw new AgentRuntimeError("timeout", "Hermes run timed out before completion.");
+        }
+      }
+    } catch (err: unknown) {
+      if (err instanceof AgentRuntimeError) throw err;
+      if (options.signal?.aborted) throw new AgentRuntimeError("cancelled");
+      throw new AgentRuntimeError("server", err instanceof Error ? err.message : String(err));
+    } finally {
+      if (options.signal) {
+        options.signal.removeEventListener("abort", onAbort);
+      }
+    }
   }
 }
 

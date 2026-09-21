@@ -1,6 +1,6 @@
 # JARVIS — Personal AI Operating Assistant
 
-[![Tests](https://img.shields.io/badge/tests-422%20passed-brightgreen.svg)](https://github.com/SamJU25/Jarvis-personal-assistant)
+[![Tests](https://img.shields.io/badge/tests-524%20passed-brightgreen.svg)](https://github.com/SamJU25/Jarvis-personal-assistant)
 [![Quality Gates](https://img.shields.io/badge/quality%20gates-lint%20%7C%20types%20%7C%20build%20passing-brightgreen.svg)](https://github.com/SamJU25/Jarvis-personal-assistant)
 [![Next.js](https://img.shields.io/badge/Next.js-16.3.5%20Turbopack-black.svg)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.2.8-blue.svg)](https://react.dev/)
@@ -84,7 +84,7 @@ The system enforces strict boundaries between product experience, agent reasonin
                                         ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                      Diagnostic & Observability Engine                      │
-│   - 8-stage lifecycle telemetry pipeline (Run -> Provider -> Skill -> ...)  │
+│   - 11-stage lifecycle telemetry pipeline (Run -> ... -> Specialist -> ...)  │
 │   - Strict browser sanitization (redacting tokens, paths, audio, shell)     │
 │   - performance.now() stage timing & latency profiling                      │
 │   - Non-blocking local Kokoro TTS audio synthesis                           │
@@ -111,12 +111,12 @@ JARVIS is built under a rigorous, 25-phase evolutionary engineering roadmap (v11
 
 | Phase | Milestone | Objective & Scope |
 |---|---|---|
-| **Phase 04** | **Hermes Core + Obsidian + Real-Time UI/Event Foundation** | **ACTIVE NEXT** • Hermes becomes the authoritative agent core owning the reasoning loop and multi-step tool calls via `/v1/runs`. Migrates durable memory to Obsidian (`AI/Memory/`) and skills to Obsidian (`AI/Skills/`). Implements server-side SSE event bus and reactive UI state without dual-turn TS loop. |
-| **Phase 05** | **Hermes + FreeLLMAPI + Functional Settings** | Connects Hermes to FreeLLMAPI gateway for automatic upstream model routing (`model=auto`). Implements functional settings UI backed by real backend snapshots (`GET /api/settings/snapshot`) and SSE (`GET /api/settings/events`) with write-only key management. |
-| **Phase 06** | **Capability Registry + Policy + Trace + Idempotency** | Consolidates all tools into a unified Capability Registry with explicit execution policies, distributed trace correlation, and idempotent run submission. |
-| **Phase 07** | **Intent + Alias Registry** | High-speed deterministic accelerator and safety-sensitive intent router for common command shortcuts without invoking redundant LLM reasoning. |
-| **Phase 08** | **Specialist Agent Orchestration** | Enables Hermes child agent delegations and specialist sub-agents for parallel tasks under strict parent supervision. |
-| **Phase 09** | **Google Workspace Consolidation** | Hardened, production-ready Gmail, Google Calendar, and Google Drive integrations via safe GWS CLI execution (`shell: false`) with strict input sanitization. |
+| **Phase 04** | **Hermes Core + Obsidian + Real-Time UI/Event Foundation** | **COMPLETED** • Hermes became the authoritative agent core owning the reasoning loop and multi-step tool calls via `/v1/runs`. Implemented server-side SSE event bus and reactive UI state. |
+| **Phase 05** | **Hermes + FreeLLMAPI + Functional Settings** | **COMPLETED** • Connected Hermes to FreeLLMAPI gateway for automatic upstream model routing (`model=auto`). Implemented functional settings UI backed by real backend snapshots. |
+| **Phase 06** | **Capability Registry + Policy + Trace + Idempotency** | **COMPLETED** • Consolidated all tools into a unified Capability Registry with explicit execution policies and trace correlation. |
+| **Phase 07** | **Intent + Alias Registry** | **COMPLETED** • High-speed deterministic accelerator and safety-sensitive intent router for common command shortcuts without invoking redundant LLM reasoning. |
+| **Phase 08** | **Specialist Agent Orchestration** | **COMPLETED** • Hermes child agent delegation via `delegate_task` (toolset `delegation`). 5 canonical specialist roles (`research`, `coding`, `productivity`, `memory`, `communications`). `DelegationPolicy` evaluating direct vs delegation. SSE event tracking (`subagent.start`/`subagent.complete`). Specialist tree card synthesis, 11-stage Debug Shell pipeline, and Settings Shell specialist registry. |
+| **Phase 09** | **Google Workspace Consolidation** | **ACTIVE NEXT** • Compare JARVIS GWS capabilities with Hermes-native Google Workspace, build parity matrix, migrate where Hermes is sufficient, remove redundant code after live verification. |
 | **Phase 10** | **Web Research + Provenance** | Grounded web search tools with source citation extraction, snippet provenance, and strict external content isolation. |
 | **Phase 11** | **Advanced Obsidian Memory Retrieval** | Semantic memory search, memory graph navigation, bi-directional link traversal, and associative recall directly inside the Obsidian vault. |
 | **Phase 12** | **Obsidian Skills + Controlled Learning** | Dynamic skill discovery from `AI/Skills/` using native Hermes `SKILL.md` format, enabling user-inspectable and editable skills. |
@@ -170,7 +170,7 @@ JARVIS is built under a rigorous, 25-phase evolutionary engineering roadmap (v11
 JARVIS enforces strict quality gates on every commit. The codebase maintains 100% test coverage for core paths:
 
 ```powershell
-# Run the full unit and integration test suite (69 files, 422 tests)
+# Run the full unit and integration test suite (87 files, 524 tests)
 npm test
 
 # Run code style & linting checks (ESLint 9)
@@ -305,7 +305,7 @@ f:\Jarvis\
 │   │   ├── api/debug/            # Diagnostic telemetry API
 │   │   ├── api/memory/           # Memory inspection API
 │   │   ├── api/voice/            # STT transcription and TTS synthesis endpoints
-│   │   ├── debug/                # 8-stage visual pipeline debug shell
+│   │   ├── debug/                # 11-stage visual pipeline debug shell
 │   │   ├── settings/             # System settings & provider configuration shell
 │   │   ├── layout.tsx            # Root HTML & layout
 │   │   └── page.tsx              # Cinematic Assistant Shell
@@ -327,10 +327,11 @@ f:\Jarvis\
 │       ├── obsidian/             # Vault containment, path normalization, note tools
 │       ├── shell/                # State machine & shell reducer
 │       ├── skills/               # Skill registry, markdown loader, semantic selector
+│       ├── specialist/           # Specialist registry, delegation policy, permission containment
 │       ├── tools/                # Application ToolRegistry & 17 tool definitions
 │       ├── verification/         # Application-owned deterministic verification engine
 │       └── voice/                # Local Whisper and Kokoro client interfaces
-└── tests/                        # Vitest test suite (69 test files, 422 tests)
+└── tests/                        # Vitest test suite (87 test files, 524 tests)
 ```
 
 ---

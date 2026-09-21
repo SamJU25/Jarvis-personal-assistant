@@ -2,6 +2,9 @@ import type { VerificationRequest, VerificationResult } from "@/lib/contracts/ve
 import type { VerificationStrategy } from "../types";
 
 export class DraftEmailVerificationStrategy implements VerificationStrategy {
+  readonly id = "email_verification";
+  readonly name = "DraftEmailVerificationStrategy";
+
   async verify(
     request: VerificationRequest,
     context?: { signal?: AbortSignal; timeoutMs?: number }

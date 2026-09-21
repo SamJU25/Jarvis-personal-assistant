@@ -5,6 +5,8 @@ import { getConfirmationService } from "@/lib/confirmation/service";
 import { getVerificationService } from "@/lib/verification/service";
 import { getDiagnosticService } from "@/lib/diagnostics/service";
 import { createDefaultToolRegistry } from "@/lib/tools/demo-tools";
+import { getIdempotencyService } from "@/lib/tools/idempotency";
+import { verificationRegistry } from "@/lib/verification/registry";
 
 export async function POST(request: NextRequest) {
   try {
@@ -61,7 +63,20 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Action is "confirm"
+    const { idempotencyKey: reqIdempotencyKey } = parsed.data;
+    const headerIdempotencyKey = request.headers.get("Idempotency-Key") || request.headers.get("X-Idempotency-Key");
+    const idempotencyKey = reqIdempotencyKey || headerIdempotencyKey;
+    const idempotency = getIdempotencyService();
+
+    if (action === "confirm" && idempotencyKey) {
+      const existingCompleted = idempotency.getRecord(idempotencyKey);
+      if (existingCompleted && existingCompleted.status === "completed" && existingCompleted.result) {
+        return NextResponse.json(existingCompleted.result, {
+          headers: { "X-Idempotent-Replay": "true" },
+        });
+      }
+    }
+
     let authorizedConfirmation;
     try {
       authorizedConfirmation = confirmationService.authorize(confirmationId);
@@ -234,19 +249,20 @@ export async function POST(request: NextRequest) {
       );
       const verDurationMs = Math.max(0, Math.round(performance.now() - verStart));
 
+      const verificationStrategyInstance = verificationRegistry.get(
+        tool.verificationStrategy || tool.id
+      );
+      const strategyName =
+        verificationStrategyInstance.name ??
+        verificationStrategyInstance.id ??
+        "VerificationStrategy";
+
       diagService.recordVerification(authorizedConfirmation.originatingRunId, {
         verificationId: `ver-${authorizedConfirmation.id}`,
         runId: authorizedConfirmation.originatingRunId,
         taskId: task?.id ?? authorizedConfirmation.id,
         toolId: tool.id,
-        strategy:
-          tool.id === "create_note"
-            ? "NoteVerificationStrategy"
-            : tool.id === "create_google_doc"
-            ? "GoogleDocVerificationStrategy"
-            : tool.id === "draft_email"
-            ? "DraftEmailVerificationStrategy"
-            : "VerificationStrategy",
+        strategy: strategyName,
         state: "completed",
         timing: {
           startedAt: new Date(Date.now() - verDurationMs).toISOString(),
@@ -387,12 +403,23 @@ export async function POST(request: NextRequest) {
       }
       diagService.completeRun(authorizedConfirmation.originatingRunId, "success");
 
-      return NextResponse.json({
+      const successPayload = {
         status: "success",
         confirmationId,
         message: speech,
         result: finalStructuredResult,
-      });
+      };
+
+      if (idempotencyKey) {
+        idempotency.storeResult(
+          idempotencyKey,
+          tool.id,
+          authorizedConfirmation.parameters,
+          successPayload
+        );
+      }
+
+      return NextResponse.json(successPayload);
     } catch (execError: unknown) {
       const message = execError instanceof Error ? execError.message : "Execution failed";
       if (task) {

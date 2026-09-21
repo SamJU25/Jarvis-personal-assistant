@@ -230,4 +230,46 @@ describe("POST /api/agent/confirm with Phase 10 Verification", () => {
     const updatedTask = vService.taskTracker.getTask(task.id);
     expect(updatedTask?.state).toBe("cancelled");
   });
+
+  it("replays cached verified result on safe retry with idempotencyKey without duplicating write", async () => {
+    const pending = confirmationService.createPendingConfirmation({
+      originatingRunId: "run-idempotent-confirm",
+      toolId: "create_note",
+      actionCategory: "note",
+      title: "CREATE NOTE",
+      target: "Inbox/JARVIS/Idempotent.md",
+      summary: "Idempotent write",
+      preview: "Preview",
+      parameters: { title: "Idempotent Note", content: "Deterministic body" },
+    });
+
+    const idempotencyKey = "op_idemp_key_12345";
+
+    // First attempt with idempotencyKey: executes and verifies
+    const res1 = await POST(
+      makeRequest({
+        confirmationId: pending.id,
+        action: "confirm",
+        idempotencyKey,
+      })
+    );
+    expect(res1.status).toBe(200);
+    const data1 = await res1.json();
+    expect(data1.status).toBe("success");
+    expect(res1.headers.get("X-Idempotent-Replay")).toBeNull();
+
+    // Safe retry with same idempotencyKey: returns cached verified result without error
+    const res2 = await POST(
+      makeRequest({
+        confirmationId: pending.id,
+        action: "confirm",
+        idempotencyKey,
+      })
+    );
+    expect(res2.status).toBe(200);
+    expect(res2.headers.get("X-Idempotent-Replay")).toBe("true");
+    const data2 = await res2.json();
+    expect(data2.status).toBe("success");
+    expect(data2.result.title).toBe(data1.result.title);
+  });
 });

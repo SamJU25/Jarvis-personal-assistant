@@ -10,6 +10,7 @@ import {
   hermesResponseRequestSchema,
   hermesResponseResponseSchema,
   hermesErrorResponseSchema,
+  hermesSkillsResponseSchema,
   type HermesHealthResponse,
   type HermesDetailedHealthResponse,
   type HermesCapabilitiesResponse,
@@ -20,6 +21,8 @@ import {
   type HermesRunResponse,
   type HermesResponseRequest,
   type HermesResponseResponse,
+  type HermesSkillsResponse,
+  type HermesRunEvent,
 } from "@/lib/contracts/hermes";
 import { getHermesConfig, type HermesConfig } from "./config";
 import {
@@ -50,6 +53,10 @@ export class HermesClient {
     this.baseUrl = customConfig?.baseUrl ?? base.baseUrl;
     this.apiKey = customConfig?.apiKey ?? base.apiKey;
     this.timeoutMs = customConfig?.timeoutMs ?? base.timeoutMs;
+  }
+
+  getBaseUrl(): string {
+    return this.baseUrl;
   }
 
   /**
@@ -133,7 +140,6 @@ export class HermesClient {
       "write_file",
       "patch",
       "computer_use",
-      "delegate_task",
     ]);
 
     const res = await this.getToolsets(options);
@@ -229,6 +235,141 @@ export class HermesClient {
       requiresAuth: true,
       ...options,
     });
+  }
+
+  /**
+   * Get list of installed/active skills (authenticated GET /v1/skills).
+   */
+  async getSkills(options?: HermesRequestOptions): Promise<HermesSkillsResponse> {
+    return this.request("/v1/skills", {
+      method: "GET",
+      schema: hermesSkillsResponseSchema,
+      requiresAuth: true,
+      ...options,
+    });
+  }
+
+  /**
+   * Inject steering guidance into an active run (authenticated POST /v1/runs/{run_id}/steer).
+   */
+  async steerRun(
+    runId: string,
+    input: string,
+    options?: HermesRequestOptions
+  ): Promise<{ status: string }> {
+    const steerSchema = z.object({ status: z.string() }).passthrough();
+    return this.request(`/v1/runs/${encodeURIComponent(runId)}/steer`, {
+      method: "POST",
+      body: JSON.stringify({ input }),
+      schema: steerSchema,
+      requiresAuth: true,
+      ...options,
+    });
+  }
+
+  /**
+   * Submit an approval decision for a run paused in waiting_for_approval
+   * (authenticated POST /v1/runs/{run_id}/approval).
+   */
+  async approvalResponse(
+    runId: string,
+    decision: { decision: "allow" | "deny" | "once" },
+    options?: HermesRequestOptions
+  ): Promise<{ status: string }> {
+    const approvalSchema = z.object({ status: z.string() }).passthrough();
+    return this.request(`/v1/runs/${encodeURIComponent(runId)}/approval`, {
+      method: "POST",
+      body: JSON.stringify(decision),
+      schema: approvalSchema,
+      requiresAuth: true,
+      ...options,
+    });
+  }
+
+  /**
+   * Stream live Server-Sent Events (SSE) from an agent run (GET /v1/runs/{run_id}/events).
+   */
+  async *streamRunEvents(
+    runId: string,
+    signal?: AbortSignal
+  ): AsyncGenerator<HermesRunEvent> {
+    const url = `${this.baseUrl}/v1/runs/${encodeURIComponent(runId)}/events`;
+    const headers: Record<string, string> = {
+      Accept: "text/event-stream",
+      ...(this.apiKey ? { Authorization: `Bearer ${this.apiKey}` } : {}),
+    };
+
+    const response = await fetch(url, { headers, signal });
+    if (!response.ok) {
+      const text = await response.text().catch(() => "");
+      throw new HermesApiError(response.status, `Failed to stream run events: ${text}`);
+    }
+
+    if (!response.body) {
+      return;
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let currentEvent = "message";
+
+    try {
+      while (true) {
+        if (signal?.aborted) {
+          await reader.cancel();
+          break;
+        }
+
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed.startsWith(":")) {
+            // Keepalive comment or empty delimiter line
+            continue;
+          }
+
+          if (trimmed.startsWith("event:")) {
+            currentEvent = trimmed.slice(6).trim();
+            continue;
+          }
+
+          if (trimmed.startsWith("data:")) {
+            const dataStr = trimmed.slice(5).trim();
+            let parsedData: unknown = dataStr;
+            try {
+              parsedData = JSON.parse(dataStr);
+            } catch {
+              // keep as raw string
+            }
+
+            yield {
+              event: currentEvent,
+              data: parsedData as Record<string, unknown> | string,
+              run_id: runId,
+            };
+
+            // Terminal event check
+            if (
+              currentEvent === "run.completed" ||
+              currentEvent === "run.failed" ||
+              currentEvent === "run.cancelled" ||
+              currentEvent === "run.interrupted"
+            ) {
+              return;
+            }
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
   }
 
   /**

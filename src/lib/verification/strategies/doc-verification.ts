@@ -2,6 +2,9 @@ import type { VerificationRequest, VerificationResult } from "@/lib/contracts/ve
 import type { VerificationStrategy } from "../types";
 
 export class CreateGoogleDocVerificationStrategy implements VerificationStrategy {
+  readonly id = "doc_verification";
+  readonly name = "GoogleDocVerificationStrategy";
+
   async verify(
     request: VerificationRequest,
     context?: { signal?: AbortSignal; timeoutMs?: number }

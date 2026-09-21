@@ -8,6 +8,11 @@ export const diagnosticEventTypeSchema = z.enum([
   "agent_started",
   "plan_created",
   "skill_selected",
+  "inference_started",
+  "inference_completed",
+  "memory_queried",
+  "memory_stored",
+  "capability_invoked",
   "tool_started",
   "tool_completed",
   "tool_failed",
@@ -17,6 +22,14 @@ export const diagnosticEventTypeSchema = z.enum([
   "confirmation_expired",
   "verification_started",
   "verification_completed",
+  "intent_detected",
+  "intent_routed",
+  "intent_fallback",
+  "specialist_spawned",
+  "specialist_started",
+  "specialist_completed",
+  "specialist_failed",
+  "specialist_cancelled",
   "provider_started",
   "provider_completed",
   "provider_failed",
@@ -225,30 +238,148 @@ export const diagnosticEventRecordSchema = z.object({
 });
 export type DiagnosticEventRecord = z.infer<typeof diagnosticEventRecordSchema>;
 
+// Phase 06: Inference Diagnostic
+export const inferenceDiagnosticSchema = z.object({
+  provider: z.string().min(1).max(100),
+  model: z.string().max(100).optional(),
+  timing: diagnosticTimingSchema,
+  outcome: diagnosticOutcomeSchema,
+  promptChars: z.number().int().nonnegative().optional(),
+  completionChars: z.number().int().nonnegative().optional(),
+  tokenUsage: z
+    .object({
+      prompt: z.number().int().nonnegative().optional(),
+      completion: z.number().int().nonnegative().optional(),
+      total: z.number().int().nonnegative().optional(),
+    })
+    .optional(),
+  failure: diagnosticFailureSchema.optional(),
+});
+export type InferenceDiagnostic = z.infer<typeof inferenceDiagnosticSchema>;
+
+// Phase 06: Memory Diagnostic
+export const memoryDiagnosticSchema = z.object({
+  operation: z.enum(["query", "retrieval", "store", "delete"]),
+  timing: diagnosticTimingSchema,
+  outcome: diagnosticOutcomeSchema,
+  querySummary: z.string().max(200).optional(),
+  count: z.number().int().nonnegative().optional(),
+  failure: diagnosticFailureSchema.optional(),
+});
+export type MemoryDiagnostic = z.infer<typeof memoryDiagnosticSchema>;
+
+// Phase 07: Intent Diagnostic
+export const intentDiagnosticSchema = z.object({
+  matched: z.boolean(),
+  intentId: z.string().max(100).optional(),
+  aliasMatched: z.string().max(150).optional(),
+  confidence: z.number().min(0).max(1).optional(),
+  route: z.enum(["deterministic", "semantic_hint", "fallback"]),
+  targetHandler: z.string().max(100).optional(),
+  isDeterministic: z.boolean(),
+  activeCapability: z.boolean().default(true),
+  candidateSummary: z.string().max(300).optional(),
+});
+export type IntentDiagnostic = z.infer<typeof intentDiagnosticSchema>;
+
+// Phase 08: Specialist Diagnostic
+export const specialistDiagnosticSchema = z.object({
+  subagentId: z.string().max(100),
+  specialistId: z.string().max(100),
+  displayName: z.string().max(150),
+  goal: z.string().max(300),
+  status: z.enum(["spawned", "running", "completed", "failed", "cancelled"]),
+  timing: diagnosticTimingSchema.optional(),
+  toolCount: z.number().int().nonnegative().default(0),
+  summary: z.string().max(500).optional(),
+  error: z.string().max(300).optional(),
+});
+export type SpecialistDiagnostic = z.infer<typeof specialistDiagnosticSchema>;
+
+// Phase 06: Final Result Diagnostic
+export const finalResultDiagnosticSchema = z.object({
+  state: z.string().max(50),
+  outcome: diagnosticOutcomeSchema,
+  title: z.string().max(150).optional(),
+  speechSummary: z.string().max(300).optional(),
+  cardCount: z.number().int().nonnegative().default(0),
+  sourceCount: z.number().int().nonnegative().default(0),
+});
+export type FinalResultDiagnostic = z.infer<typeof finalResultDiagnosticSchema>;
+
 // 5.11 Run
 export const runDiagnosticSchema = z.object({
   runId: z.string().min(1).max(100),
   taskId: z.string().max(100).optional(),
+  sessionId: z.string().max(100).optional(),
+  hermesRunId: z.string().max(100).optional(),
   requestSummary: z.string().min(1).max(200),
   state: diagnosticRunStateSchema,
   outcome: diagnosticOutcomeSchema,
   createdAt: z.string().refine((val) => !isNaN(Date.parse(val))),
   updatedAt: z.string().refine((val) => !isNaN(Date.parse(val))),
   timing: diagnosticTimingSchema,
+  intent: intentDiagnosticSchema.optional(),
+  specialists: z.array(specialistDiagnosticSchema).default([]),
   provider: providerDiagnosticSchema.optional(),
   skill: skillDiagnosticSchema.optional(),
+  inference: inferenceDiagnosticSchema.optional(),
+  memory: memoryDiagnosticSchema.optional(),
   tools: z.array(toolDiagnosticSchema),
   confirmation: confirmationDiagnosticSchema.optional(),
   verification: verificationDiagnosticSchema.optional(),
+  finalResult: finalResultDiagnosticSchema.optional(),
   failure: diagnosticFailureSchema.optional(),
   eventCount: z.number().int().nonnegative(),
 });
 export type RunDiagnostic = z.infer<typeof runDiagnosticSchema>;
 
+// Phase 06: Correlated Execution Trace
+export const executionTraceSchema = z.object({
+  sessionId: z.string().min(1).max(100),
+  runId: z.string().min(1).max(100),
+  hermesRunId: z.string().max(100).optional(),
+  taskId: z.string().max(100).optional(),
+  startedAt: z.string().refine((val) => !isNaN(Date.parse(val))),
+  completedAt: z
+    .string()
+    .refine((val) => !isNaN(Date.parse(val)))
+    .optional(),
+  durationMs: z.number().finite().nonnegative(),
+  state: diagnosticRunStateSchema,
+  outcome: diagnosticOutcomeSchema,
+  session: z
+    .object({
+      sessionId: z.string().min(1).max(100),
+      channel: z.string().max(50).optional(),
+      startedAt: z.string(),
+    })
+    .optional(),
+  intent: intentDiagnosticSchema.optional(),
+  specialists: z.array(specialistDiagnosticSchema).default([]),
+  run: z.object({
+    runId: z.string().min(1).max(100),
+    hermesRunId: z.string().max(100).optional(),
+    requestSummary: z.string().min(1).max(200),
+    state: z.string(),
+  }),
+  skill: skillDiagnosticSchema.optional(),
+  inference: inferenceDiagnosticSchema.optional(),
+  memory: memoryDiagnosticSchema.optional(),
+  capabilities: z.array(toolDiagnosticSchema).default([]),
+  confirmation: confirmationDiagnosticSchema.optional(),
+  verification: verificationDiagnosticSchema.optional(),
+  finalResult: finalResultDiagnosticSchema.optional(),
+  failure: diagnosticFailureSchema.optional(),
+});
+export type ExecutionTrace = z.infer<typeof executionTraceSchema>;
+
 // 5.12 Execution History
 export const executionHistoryEntrySchema = z.object({
   runId: z.string().min(1).max(100),
   taskId: z.string().max(100).optional(),
+  sessionId: z.string().max(100).optional(),
+  hermesRunId: z.string().max(100).optional(),
   startedAt: z.string().refine((val) => !isNaN(Date.parse(val))),
   completedAt: z
     .string()
@@ -260,9 +391,13 @@ export const executionHistoryEntrySchema = z.object({
   requestSummary: z.string().min(1).max(200),
   providerSummary: z.string().max(200).optional(),
   skillSummary: z.string().max(200).optional(),
+  specialistSummary: z.string().max(200).optional(),
+  inferenceSummary: z.string().max(200).optional(),
+  memorySummary: z.string().max(200).optional(),
   toolSummaries: z.array(z.string().max(200)),
   confirmationSummary: z.string().max(200).optional(),
   verificationSummary: z.string().max(200).optional(),
+  finalResultSummary: z.string().max(200).optional(),
   failureSummary: z.string().max(200).optional(),
 });
 export type ExecutionHistoryEntry = z.infer<typeof executionHistoryEntrySchema>;
@@ -285,5 +420,6 @@ export const debugSnapshotSchema = z.object({
   events: z.array(diagnosticEventRecordSchema).max(200),
   totals: debugSnapshotTotalsSchema,
   recentVoice: z.array(voiceDiagnosticSchema).max(50).optional(),
+  traces: z.array(executionTraceSchema).max(50).optional(),
 });
 export type DebugSnapshot = z.infer<typeof debugSnapshotSchema>;

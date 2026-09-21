@@ -9,6 +9,7 @@ export const agentApiRequestSchema = z.object({
   message: z.string().trim().min(1).max(4_000),
   conversation: conversationSchema.default([]),
   confirmationId: z.string().optional(),
+  sessionId: z.string().optional(),
 });
 
 export const safeRunMetaSchema = z.object({
@@ -35,6 +36,15 @@ const publicEventSchema = z.object({
     "confirmation_required",
     "verification_started",
     "verification_completed",
+    "intent_detected",
+    "intent_routed",
+    "intent_fallback",
+    "specialist_spawned",
+    "specialist_started",
+    "specialist_progress",
+    "specialist_completed",
+    "specialist_failed",
+    "specialist_cancelled",
   ]),
   timestamp: z.string(),
   label: z.string(),
@@ -42,6 +52,7 @@ const publicEventSchema = z.object({
 
 export const agentApiFrameSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("event"), event: publicEventSchema.strict() }).strict(),
+  z.object({ type: z.literal("delta"), text: z.string() }).strict(),
   z.object({ type: z.literal("confirmation_required"), confirmation: pendingConfirmationSchema }).strict(),
   z.object({ type: z.literal("result"), result: structuredResultSchema, meta: safeRunMetaSchema.strict() }).strict(),
   z.object({ type: z.literal("error"), error: safeAgentErrorSchema.strict() }).strict(),

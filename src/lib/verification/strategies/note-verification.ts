@@ -5,6 +5,9 @@ import { getObsidianVaultPath } from "@/lib/obsidian/config";
 import { resolveVaultPath, toVaultRelativePath } from "@/lib/obsidian/path";
 
 export class CreateNoteVerificationStrategy implements VerificationStrategy {
+  readonly id = "note_verification";
+  readonly name = "NoteVerificationStrategy";
+
   async verify(
     request: VerificationRequest,
     context?: { signal?: AbortSignal; timeoutMs?: number }

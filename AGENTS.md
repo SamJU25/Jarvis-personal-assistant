@@ -14,7 +14,7 @@ JARVIS is a local-first personal AI operating assistant. `JARVIS_MASTER_PROMPT.m
 
 ## Current milestone
 
-**PHASE 12 — RELIABILITY AND POLISH** is implemented and verified (Phases 1, 2, 3, 4, 5, 6, 7, 7.5, 8, 9, 10, and 11 preserved and reused).
+**PHASE 08 — SPECIALIST AGENT ORCHESTRATION** is implemented and verified (Updated Prompts phases 04–07 and legacy Phases 1–12 preserved and reused).
 
 The app includes:
 - Phase 1: Responsive shell, state-driven animated core, sample activity and semantic results, settings shell, and debug shell.
@@ -29,7 +29,8 @@ The app includes:
 - Phase 9: Application-owned write actions and human confirmation system. Features write tools (`create_note`, `create_google_doc`, and `draft_email` — drafts only, strictly no `send_email`), in-memory `ConfirmationService` with single-use consumption and 60-second TTL replay protection, explicit human approval via UI Confirmation Card and voice intent matching, server execution via `/api/agent/confirm`, and truthful status reporting.
 - Phase 10: Formal verification and task lifecycle (`src/lib/verification/`, `src/lib/contracts/verification.ts`, `src/lib/contracts/task.ts`). Formalizes the lifecycle (`queued` → `planning` → `executing` → `waiting_for_approval` → `verifying` → `completed` | `failed` | `cancelled`). Tool completion is not task completion; actions must pass application-owned deterministic verification (`create_note` on-disk vault containment, `create_google_doc` document ID & link validation, `draft_email` draft-only verification). Model-generated claims ("verified: true") are strictly ignored as evidence. Stale runs and cancelled runs are protected against resurrection.
 - Phase 11: Observability expansion (`src/lib/contracts/diagnostics.ts`, `src/lib/diagnostics/`). Provides canonical Zod diagnostic models, server-side in-memory `DiagnosticService` managing bounded recent execution history (max 50) and diagnostic event stream (max 200), real execution timings across run/provider/tools/confirmation/verification/voice, finite application-owned failure code classification, strict browser sanitization (redacting tokens, secrets, absolute paths, GWS commands, and raw audio), and an enhanced read-only Debug Shell (`/debug`) displaying the complete 8-stage lifecycle pipeline (`RUN` → `PROVIDER` → `SKILL` → `TOOLS` → `CONFIRMATION` → `VERIFICATION` → `VOICE` → `FINAL RESULT`).
-- Phase 12: Reliability and polish (`src/lib/agent/`, `src/lib/shell/`, `src/lib/obsidian/`). Resolves reasoning latency bottlenecks (~93% reduction in simple reads via `think: false` and `keep_alive: 15m`), introduces deterministic task fast-path (<10ms for unambiguous time queries), enables natural conversational multi-turn follow-ups via card context enrichment (`formatAssistantTurn`), hardens tool argument coercion (`z.coerce.number()`), improves note reading robustness with vault-wide basename and extension fallback, hardens card/state decision normalization, and guarantees non-blocking asynchronous voice playback. Future milestones beyond Phase 12 are NOT implemented.
+- Phase 12: Reliability and polish (`src/lib/agent/`, `src/lib/shell/`, `src/lib/obsidian/`). Resolves reasoning latency bottlenecks (~93% reduction in simple reads via `think: false` and `keep_alive: 15m`), introduces deterministic task fast-path (<10ms for unambiguous time queries), enables natural conversational multi-turn follow-ups via card context enrichment (`formatAssistantTurn`), hardens tool argument coercion (`z.coerce.number()`), improves note reading robustness with vault-wide basename and extension fallback, hardens card/state decision normalization, and guarantees non-blocking asynchronous voice playback.
+- Phase 13 (Updated Prompts Phase 08): Specialist Agent Orchestration (`src/lib/specialist/`, `src/lib/contracts/specialist.ts`). Enables Hermes core to delegate suitable work to specialist child agents (`research`, `coding`, `productivity`, `memory`, `communications`) using Hermes's native `delegate_task` in toolset `delegation`. Features `SpecialistRegistry` with 5 canonical roles and bounded temporary specialist creation, `DelegationPolicy` evaluating direct execution vs delegation, `DelegationPlan` routing for multi-domain/parallel/codebase tasks, child permission containment via `validateChildPermissions`, SSE event handling for `subagent.start`/`subagent.complete`, specialist tree card synthesis in results, 11-stage Debug Shell pipeline, and Settings Shell specialist registry display. Future milestones beyond Phase 08 are NOT implemented.
 
 ## Commands
 
@@ -41,6 +42,13 @@ npm run typecheck
 npm run build
 npm start
 ```
+
+## Token Optimization (RTK)
+
+RTK (Rust Token Killer) is installed globally and project-scoped to minimize LLM context token consumption by 60–90% through intelligent command output compression.
+- **Rule**: Always prefix shell commands with `rtk` where applicable (e.g., `rtk git status`, `rtk git diff`, `rtk npm test`).
+- **Savings Analytics**: Run `rtk gain` or `rtk gain --history` to inspect token savings.
+- **Bypass**: Use `rtk proxy <cmd>` if raw, uncompressed output is explicitly required for debugging.
 
 ## Architecture
 
@@ -54,7 +62,8 @@ npm start
 - `src/lib/skills/` implements server-side skill definitions, loader, registry, and semantic selection.
 - `src/lib/google/` implements server-side GWS CLI wrapper, safe command execution (`shell: false`), data normalizers, read tools, and write tools (`create_google_doc`, `draft_email`).
 - `src/lib/memory/` implements server-side SQLite persistent memory, secret rejection, authorization policy, and bounded retrieval.
-- Keep UI, provider, runtime, tools, skills, memory, permissions, verification, voice, events, confirmations, and integrations separate.
+- `src/lib/specialist/` implements specialist definitions, registry, delegation policy, temporary specialist lifecycle, and permission containment.
+- Keep UI, provider, runtime, tools, skills, memory, permissions, verification, voice, events, confirmations, specialists, and integrations separate.
 - Render only validated semantic data through trusted React components.
 - Prefer direct imports, small readable modules, and no unnecessary dependencies.
 
@@ -72,9 +81,9 @@ Never fabricate tool calls, integration health, verification, or successful acti
 
 Do not add Docker, Redis, PostgreSQL, Kubernetes, n8n, queues, cloud infrastructure, unnecessary MCP systems, databases, or a Python backend without a demonstrated requirement.
 
-Phase 12 — Reliability and Polish is implemented and verified. Phases 1 through 11 remain preserved and active. Future milestones beyond Phase 12 are NOT implemented. No external telemetry services, cloud dashboards, persistent execution databases, distributed tracing, email sending, calendar deletion, or browser automation are implemented. All write actions require explicit user confirmation before execution, must pass application verification before reporting completion, and diagnostics remain strictly read-only.
+Phase 08 — Specialist Agent Orchestration is implemented and verified. Legacy Phases 1 through 12 and Updated Prompts Phases 04–07 remain preserved and active. Future milestones beyond Phase 08 (Updated Prompts) are NOT implemented. No external telemetry services, cloud dashboards, persistent execution databases, distributed tracing, email sending, calendar deletion, or browser automation are implemented. All write actions require explicit user confirmation before execution, must pass application verification before reporting completion, and diagnostics remain strictly read-only.
 
-### Phase 2, 3, 4, 5, 6, 7, 7.5, 8, 9, 10, 11 & 12 boundaries
+### Phase 2, 3, 4, 5, 6, 7, 7.5, 8, 9, 10, 11, 12 & 13 boundaries
 
 - The JARVIS app is a separate runtime from the Command Code coding session. Never confuse them.
 - Command Code is launched headless via its Node entry in a non-interactive session, with plan permission, a bounded role-aware conversation, and a required output schema.
@@ -89,3 +98,4 @@ Phase 12 — Reliability and Polish is implemented and verified. Phases 1 throug
 - Arguments are supplied as a fixed struct; raw model/user input is never concatenated into a command.
 - Output is strictly validated against `StructuredResult`.
 - `.env.local` holds `JARVIS_COMMAND_CODE_ENTRY`, `OBSIDIAN_VAULT_PATH`, `JARVIS_GWS_EXECUTABLE`, optional `JARVIS_MEMORY_DB_PATH`, `JARVIS_PROVIDER`, `JARVIS_OLLAMA_BASE_URL`, `JARVIS_OLLAMA_MODEL`, `JARVIS_WHISPER_*`, and `JARVIS_KOKORO_*`. Keep it ignored. Never hard-code specific models, tokens, or expose absolute paths to browser clients.
+- Specialist delegation uses Hermes-native `delegate_task` (toolset `delegation`). Child specialist tool permissions must never exceed parent authorization. Model text or alias matches are never authorization for child writes; human confirmation remains authoritative.

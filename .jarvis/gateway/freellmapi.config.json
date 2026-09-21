@@ -1,0 +1,14 @@
+{
+  "keys": [
+    {
+      "platform": "groq",
+      "key": "gsk_super_secret_test_key",
+      "label": "test"
+    }
+  ],
+  "routing": {
+    "strategy": "balanced"
+  },
+  "customProviders": [],
+  "models": {}
+}

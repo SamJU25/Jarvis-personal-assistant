@@ -2,6 +2,9 @@ import type { VerificationRequest, VerificationResult } from "@/lib/contracts/ve
 import type { VerificationStrategy } from "../types";
 
 export class DefaultReadVerificationStrategy implements VerificationStrategy {
+  readonly id = "read_verification";
+  readonly name = "ReadVerificationStrategy";
+
   async verify(
     request: VerificationRequest,
     context?: { signal?: AbortSignal; timeoutMs?: number }

@@ -6,14 +6,17 @@ import { useProviderStatus } from "@/lib/agent/use-provider-status";
 import type { DebugSnapshot } from "@/lib/contracts/diagnostics";
 
 const PIPELINE_STAGES = [
-  { id: "RUN", label: "RUN" },
-  { id: "PROVIDER", label: "PROVIDER" },
+  { id: "SESSION", label: "SESSION" },
+  { id: "INTENT", label: "INTENT" },
+  { id: "RUN", label: "HERMES RUN" },
+  { id: "SPECIALIST", label: "SPECIALIST" },
   { id: "SKILL", label: "SKILL" },
-  { id: "TOOLS", label: "TOOLS" },
-  { id: "CONFIRMATION", label: "CONFIRMATION" },
-  { id: "VERIFICATION", label: "VERIFICATION" },
-  { id: "VOICE", label: "VOICE" },
-  { id: "RESULT", label: "FINAL RESULT" },
+  { id: "INFERENCE", label: "INFERENCE" },
+  { id: "MEMORY", label: "MEMORY" },
+  { id: "TOOLS", label: "CAPABILITY" },
+  { id: "CONFIRMATION", label: "CONFIRM" },
+  { id: "VERIFICATION", label: "VERIFY" },
+  { id: "RESULT", label: "RESULT" },
 ] as const;
 
 export function DebugShell() {
@@ -81,7 +84,7 @@ export function DebugShell() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <p className="text-[10px] tracking-widest text-[#8de2f2] uppercase font-sans font-semibold">
-              Phase 11 Observability Expansion · Read-Only Diagnostics
+              Phase 06 Capability Registry · Policy · Correlated Trace · Idempotency
             </p>
             <h1 className="text-2xl md:text-3xl font-light tracking-tight text-white font-sans mt-1">
               Debug Shell
@@ -153,7 +156,7 @@ export function DebugShell() {
               EXECUTION PIPELINE
             </h2>
             <p className="text-[11px] text-[#60727a] font-sans">
-              RUN &rarr; PROVIDER &rarr; SKILL &rarr; TOOLS &rarr; CONFIRMATION &rarr; VERIFICATION &rarr; VOICE &rarr; FINAL RESULT
+              SESSION &rarr; INTENT &rarr; HERMES RUN &rarr; SKILL &rarr; INFERENCE &rarr; MEMORY &rarr; CAPABILITY &rarr; CONFIRMATION &rarr; VERIFICATION &rarr; FINAL RESULT
             </p>
           </div>
           <span
@@ -168,13 +171,17 @@ export function DebugShell() {
         </div>
 
         {/* Pipeline Stages Visualizer */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-6 lg:grid-cols-11 gap-2 mb-6">
           {PIPELINE_STAGES.map((stage, idx) => {
             const isCurrent =
               activeRun &&
-              ((stage.id === "RUN" && (activeRun.state === "queued" || activeRun.state === "planning")) ||
-                (stage.id === "PROVIDER" && activeRun.state === "planning") ||
-                (stage.id === "SKILL" && activeRun.skill?.selected) ||
+              ((stage.id === "SESSION" && !!activeRun.sessionId) ||
+                (stage.id === "INTENT" && !!activeRun.intent) ||
+                (stage.id === "RUN" && (activeRun.state === "queued" || activeRun.state === "planning")) ||
+                (stage.id === "SPECIALIST" && !!activeRun.specialists && activeRun.specialists.length > 0) ||
+                (stage.id === "SKILL" && !!activeRun.skill?.selected) ||
+                (stage.id === "INFERENCE" && (!!activeRun.inference || !!activeRun.provider)) ||
+                (stage.id === "MEMORY" && !!activeRun.memory) ||
                 (stage.id === "TOOLS" && activeRun.state === "executing") ||
                 (stage.id === "CONFIRMATION" && activeRun.state === "waiting_for_approval") ||
                 (stage.id === "VERIFICATION" && activeRun.state === "verifying") ||
@@ -197,11 +204,49 @@ export function DebugShell() {
 
         {/* Active Run Breakdown */}
         {activeRun ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-[11px]">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-[11px]">
+            {/* Intent & Routing */}
+            <div className="p-3.5 rounded bg-[#05080b]/70 border border-[#bbdae9]/10">
+              <div className="text-[#8de2f2] font-sans font-semibold mb-2">INTENT & ALIAS</div>
+              <div className="space-y-1 text-[#9aabb2]">
+                <div>
+                  <span className="text-[#60727a]">Matched:</span>{" "}
+                  {activeRun.intent?.matched ? (
+                    <span className="text-emerald-400 font-semibold">Yes ({activeRun.intent.intentId})</span>
+                  ) : (
+                    <span className="text-slate-400">Fallback to Hermes</span>
+                  )}
+                </div>
+                <div>
+                  <span className="text-[#60727a]">Alias:</span> {activeRun.intent?.aliasMatched ?? "None"}
+                </div>
+                <div>
+                  <span className="text-[#60727a]">Route:</span>{" "}
+                  <span className="text-white font-semibold">{activeRun.intent?.route ?? "semantic_fallback"}</span>
+                </div>
+                <div>
+                  <span className="text-[#60727a]">Handler:</span> {activeRun.intent?.targetHandler ?? "hermes"}
+                </div>
+                <div>
+                  <span className="text-[#60727a]">Deterministic:</span> {activeRun.intent?.isDeterministic ? "Yes" : "No"}
+                </div>
+                {activeRun.intent?.confidence !== undefined && (
+                  <div>
+                    <span className="text-[#60727a]">Confidence:</span> {(activeRun.intent.confidence * 100).toFixed(0)}%
+                  </div>
+                )}
+                {activeRun.intent?.candidateSummary && (
+                  <div className="pt-1 text-[#8de2f2] truncate">
+                    <span className="text-[#60727a]">Candidate:</span> {activeRun.intent.candidateSummary}
+                  </div>
+                )}
+              </div>
+            </div>
             {/* Run Identity & Timing */}
             <div className="p-3.5 rounded bg-[#05080b]/70 border border-[#bbdae9]/10">
-              <div className="text-[#8de2f2] font-sans font-semibold mb-2">RUN & TASK</div>
+              <div className="text-[#8de2f2] font-sans font-semibold mb-2">SESSION, RUN & TASK</div>
               <div className="space-y-1 text-[#9aabb2]">
+                <div><span className="text-[#60727a]">Session:</span> {activeRun.sessionId ?? "None"}</div>
                 <div><span className="text-[#60727a]">Run ID:</span> {activeRun.runId}</div>
                 <div><span className="text-[#60727a]">Task ID:</span> {activeRun.taskId ?? "None"}</div>
                 <div><span className="text-[#60727a]">State:</span> <span className="text-white font-semibold">{activeRun.state}</span></div>
@@ -288,6 +333,42 @@ export function DebugShell() {
                       )}
                       {t.outputSummary && (
                         <div className="text-[10px] text-[#9aabb2] truncate">Output: {t.outputSummary.detail}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Specialists Orchestrated */}
+            {activeRun.specialists && activeRun.specialists.length > 0 && (
+              <div className="md:col-span-2 lg:col-span-4 p-3.5 rounded bg-[#05080b]/70 border border-[#bbdae9]/10">
+                <div className="text-[#8de2f2] font-sans font-semibold mb-2">
+                  SPECIALISTS ORCHESTRATED ({activeRun.specialists.length})
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {activeRun.specialists.map((s) => (
+                    <div key={s.subagentId} className="p-2.5 rounded bg-black/40 border border-white/5 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-white">{s.displayName}</span>
+                        <span
+                          className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ${
+                            s.status === "completed"
+                              ? "bg-emerald-950 text-emerald-300 border border-emerald-800/40"
+                              : s.status === "failed"
+                              ? "bg-rose-950 text-rose-300 border border-rose-800/40"
+                              : "bg-cyan-950 text-cyan-300 border border-cyan-800/40"
+                          }`}
+                        >
+                          {s.status}
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-[#60727a]">
+                        Role: <span className="text-[#8de2f2] font-mono">{s.specialistId}</span> · Tools: {s.toolCount} · Duration: {s.timing?.durationMs ?? 0}ms
+                      </div>
+                      <div className="text-[10px] text-[#9aabb2] truncate">Goal: {s.goal}</div>
+                      {s.summary && (
+                        <div className="text-[10px] text-slate-300 truncate">Result: {s.summary}</div>
                       )}
                     </div>
                   ))}

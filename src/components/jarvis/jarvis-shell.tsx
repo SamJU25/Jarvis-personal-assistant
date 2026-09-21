@@ -18,6 +18,8 @@ export function JarvisShell() {
   const micCaptureRef = useRef<MicrophoneCaptureManager>(new MicrophoneCaptureManager());
 
   const [isExecutingConfirmation, setIsExecutingConfirmation] = useState(false);
+  const [streamedText, setStreamedText] = useState("");
+  const sessionIdRef = useRef<string>("jarvis-session-init");
 
   const presentation = createPresentation(state);
   const isRunning = state.runStatus === "running";
@@ -26,6 +28,7 @@ export function JarvisShell() {
   const isListening = state.coreState === "listening";
 
   useEffect(() => {
+    sessionIdRef.current = `jarvis-session-${Date.now()}`;
     const player = speechPlayerRef.current;
     const mic = micCaptureRef.current;
     return () => {
@@ -142,13 +145,18 @@ export function JarvisShell() {
     const runId = crypto.randomUUID();
     const controller = new AbortController();
     controllerRef.current = controller;
+    setStreamedText("");
     dispatch({ type: "runRequested", runId, command });
 
     try {
       const response = await fetch("/api/agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: command, conversation: state.conversation }),
+        body: JSON.stringify({
+          message: command,
+          conversation: state.conversation,
+          sessionId: sessionIdRef.current,
+        }),
         signal: controller.signal,
       });
 
@@ -158,7 +166,14 @@ export function JarvisShell() {
         if (frame.type === "event") {
           dispatch({ type: "runEventReceived", runId, event: frame.event });
         }
+        if (frame.type === "delta") {
+          setStreamedText((prev) => prev + frame.text);
+        }
+        if (frame.type === "confirmation_required") {
+          dispatch({ type: "confirmationReceived", confirmation: frame.confirmation });
+        }
         if (frame.type === "result") {
+          setStreamedText("");
           dispatch({ type: "runResultReceived", runId, result: frame.result, meta: frame.meta });
 
           // Voice Output: Synthesize and play speech from validated StructuredResult.speech
@@ -174,10 +189,12 @@ export function JarvisShell() {
           }
         }
         if (frame.type === "error") {
+          setStreamedText("");
           dispatch({ type: "runFailed", runId, error: frame.error });
         }
       }
     } catch {
+      setStreamedText("");
       if (controller.signal.aborted) {
         dispatch({ type: "runCancelled", runId });
       } else {
@@ -241,6 +258,7 @@ export function JarvisShell() {
   }
 
   function cancel() {
+    setStreamedText("");
     if (state.pendingConfirmation) {
       handleCancel();
       return;
@@ -266,7 +284,7 @@ export function JarvisShell() {
   const response =
     state.result?.speech ??
     (isRunning
-      ? "Reasoning through the request…"
+      ? (streamedText || "Reasoning through the request…")
       : state.error?.message ?? "JARVIS is online and ready. Enter a command or use voice to begin.");
 
   return (

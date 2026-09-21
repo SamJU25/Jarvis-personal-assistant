@@ -3,6 +3,16 @@ import type { ResultCard } from "@/lib/contracts/result";
 
 export type ToolPermission = "read" | "write" | "dangerous" | "memory";
 
+export type CapabilityRiskLevel = "low" | "medium" | "high" | "critical";
+export type CapabilityClass = "read" | "write" | "idempotent_write" | "admin";
+export type ConfirmationPolicy = "none" | "explicit" | "always";
+
+export interface CapabilityAuditPolicy {
+  logParameters?: boolean;
+  redactFields?: string[];
+  retentionDays?: number;
+}
+
 export interface ToolContext {
   signal: AbortSignal;
   callId: string;
@@ -18,6 +28,16 @@ export interface JarvisTool<TInput = unknown, TOutput = unknown> {
   renderer: ResultCard["type"];
   source: string;
   execute: (input: TInput, context: ToolContext) => Promise<TOutput>;
+
+  // Phase 06: Declarative Capability Metadata
+  riskLevel?: CapabilityRiskLevel;
+  capabilityClass?: CapabilityClass;
+  confirmationPolicy?: ConfirmationPolicy;
+  verificationStrategy?: string;
+  reversible?: boolean;
+  timeoutMs?: number;
+  idempotent?: boolean;
+  auditPolicy?: CapabilityAuditPolicy;
 }
 
 export type Tool<TInput = unknown, TOutput = unknown> = JarvisTool<TInput, TOutput>;
@@ -28,6 +48,16 @@ export interface ToolMetadata {
   description: string;
   permission: ToolPermission;
   parameters: Record<string, unknown>;
+
+  // Phase 06: Optional resolved capability metadata
+  riskLevel?: CapabilityRiskLevel;
+  capabilityClass?: CapabilityClass;
+  confirmationPolicy?: ConfirmationPolicy;
+  verificationStrategy?: string;
+  reversible?: boolean;
+  timeoutMs?: number;
+  idempotent?: boolean;
+  auditPolicy?: CapabilityAuditPolicy;
 }
 
 export const toolCallRequestSchema = z.object({

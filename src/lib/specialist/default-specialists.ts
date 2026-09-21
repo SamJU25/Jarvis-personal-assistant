@@ -1,0 +1,98 @@
+import type { SpecialistDefinition } from "@/lib/contracts/specialist";
+
+/**
+ * Canonical initial specialist roles available in JARVIS.
+ * Each role defines bounded capabilities, allowed skills, routing profiles, and execution constraints.
+ */
+export const DEFAULT_SPECIALISTS: readonly SpecialistDefinition[] = [
+  {
+    id: "research",
+    displayName: "Research Specialist",
+    role: "Deep information retrieval and knowledge synthesis across Obsidian vault notes, Drive files, persistent memory, and demo datasets. Focuses on gathering facts, cross-referencing information, and summarizing findings without modifying data.",
+    preferredRoutingProfile: "reasoning",
+    allowedSkills: ["research"],
+    allowedCapabilities: [
+      "search_vault",
+      "read_note",
+      "search_drive",
+      "read_drive_file",
+      "search_demo_data",
+      "read_demo_item",
+      "search_memory",
+      "list_memory",
+    ],
+    maxExecutionTimeMs: 45000,
+    concurrencyLimit: 2,
+    userVisible: true,
+    isTemporary: false,
+  },
+  {
+    id: "coding",
+    displayName: "Coding Specialist",
+    role: "Technical inspection, code analysis, architecture assessment, and documentation synthesis. Investigates codebases, designs solutions, and explains system implementations.",
+    preferredRoutingProfile: "coding",
+    allowedSkills: ["research"],
+    allowedCapabilities: [
+      "search_vault",
+      "read_note",
+      "search_demo_data",
+      "read_demo_item",
+    ],
+    maxExecutionTimeMs: 60000,
+    concurrencyLimit: 2,
+    userVisible: true,
+    isTemporary: false,
+  },
+  {
+    id: "productivity",
+    displayName: "Productivity Specialist",
+    role: "Daily agenda organization, meeting preparation, calendar inspection, and loose-ends tracking. Coordinates schedules, organizes briefings, and prepares upcoming meetings.",
+    preferredRoutingProfile: "fast",
+    allowedSkills: ["morning-briefing", "meeting-prep", "loose-ends"],
+    allowedCapabilities: [
+      "get_calendar_events",
+      "search_vault",
+      "read_note",
+      "get_current_time",
+      "search_gmail",
+      "read_gmail",
+    ],
+    maxExecutionTimeMs: 30000,
+    concurrencyLimit: 2,
+    userVisible: true,
+    isTemporary: false,
+  },
+  {
+    id: "memory",
+    displayName: "Memory Specialist",
+    role: "Knowledge base retrieval, long-term memory lookup, personal preference indexing, and durable memory management. Preserves and recalls context across conversations.",
+    preferredRoutingProfile: "fast",
+    allowedSkills: ["capture-note"],
+    allowedCapabilities: [
+      "search_memory",
+      "list_memory",
+      "search_vault",
+      "read_note",
+    ],
+    maxExecutionTimeMs: 30000,
+    concurrencyLimit: 2,
+    userVisible: true,
+    isTemporary: false,
+  },
+  {
+    id: "communications",
+    displayName: "Communications Specialist",
+    role: "Message drafting, correspondence summarization, communication history review, and email synthesis. Any proposed write actions strictly require human approval.",
+    preferredRoutingProfile: "fast",
+    allowedSkills: ["meeting-prep", "loose-ends"],
+    allowedCapabilities: [
+      "search_gmail",
+      "read_gmail",
+      "draft_email",
+    ],
+    maxExecutionTimeMs: 30000,
+    concurrencyLimit: 2,
+    userVisible: true,
+    isTemporary: false,
+  },
+];

@@ -41,6 +41,7 @@ export type PendingConfirmation = z.infer<typeof pendingConfirmationSchema>;
 export const confirmationRequestSchema = z.object({
   confirmationId: z.string().min(1),
   action: z.enum(["confirm", "cancel"]),
+  idempotencyKey: z.string().optional(),
 });
 
 export type ConfirmationRequest = z.infer<typeof confirmationRequestSchema>;

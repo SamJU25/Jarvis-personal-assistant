@@ -13,21 +13,38 @@ export class VerificationRegistry {
   }
 
   private registerDefaults(): void {
-    this.register("create_note", new CreateNoteVerificationStrategy());
-    this.register("create_google_doc", new CreateGoogleDocVerificationStrategy());
-    this.register("draft_email", new DraftEmailVerificationStrategy());
+    const noteStrategy = new CreateNoteVerificationStrategy();
+    const docStrategy = new CreateGoogleDocVerificationStrategy();
+    const emailStrategy = new DraftEmailVerificationStrategy();
+    const readStrategy = new DefaultReadVerificationStrategy();
+
+    // Register by canonical strategy ID
+    this.register("note_verification", noteStrategy);
+    this.register("doc_verification", docStrategy);
+    this.register("email_verification", emailStrategy);
+    this.register("read_verification", readStrategy);
+
+    // Backward-compatible registration by tool ID alias
+    this.register("create_note", noteStrategy);
+    this.register("create_google_doc", docStrategy);
+    this.register("draft_email", emailStrategy);
   }
 
-  register(toolId: string, strategy: VerificationStrategy): void {
-    this.strategies.set(toolId, strategy);
+  register(strategyOrToolId: string, strategy: VerificationStrategy): void {
+    this.strategies.set(strategyOrToolId, strategy);
   }
 
-  get(toolId: string): VerificationStrategy {
-    return this.strategies.get(toolId) ?? this.defaultStrategy;
+  get(strategyOrToolId: string): VerificationStrategy {
+    return this.strategies.get(strategyOrToolId) ?? this.defaultStrategy;
   }
 
-  has(toolId: string): boolean {
-    return this.strategies.has(toolId);
+  getStrategyName(strategyOrToolId: string): string {
+    const strat = this.get(strategyOrToolId);
+    return strat.name ?? strat.id ?? "VerificationStrategy";
+  }
+
+  has(strategyOrToolId: string): boolean {
+    return this.strategies.has(strategyOrToolId);
   }
 
   clear(): void {

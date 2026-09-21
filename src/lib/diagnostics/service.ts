@@ -14,6 +14,13 @@ import {
   type ConfirmationDiagnostic,
   type VerificationDiagnostic,
   type VoiceDiagnostic,
+  type InferenceDiagnostic,
+  type MemoryDiagnostic,
+  type IntentDiagnostic,
+  type SpecialistDiagnostic,
+  type DiagnosticEventType,
+  type FinalResultDiagnostic,
+  type ExecutionTrace,
   debugSnapshotSchema,
 } from "@/lib/contracts/diagnostics";
 import { safeSummaryText } from "./sanitizer";
@@ -27,6 +34,7 @@ export class DiagnosticService {
   private readonly history: ExecutionHistoryEntry[] = [];
   private readonly activeRuns = new Map<string, RunDiagnostic>();
   private readonly recentVoice: VoiceDiagnostic[] = [];
+  private readonly traces: ExecutionTrace[] = [];
   private currentActiveRunId: string | null = null;
 
   private totals: DebugSnapshotTotals = {
@@ -78,11 +86,18 @@ export class DiagnosticService {
   /**
    * Starts tracking a new agent run.
    */
-  startRun(runId: string, request: string, taskId?: string): RunDiagnostic {
+  startRun(
+    runId: string,
+    request: string,
+    taskId?: string,
+    context?: { sessionId?: string; hermesRunId?: string }
+  ): RunDiagnostic {
     const now = new Date().toISOString();
     const run: RunDiagnostic = {
       runId,
       taskId,
+      sessionId: context?.sessionId,
+      hermesRunId: context?.hermesRunId,
       requestSummary: safeSummaryText(request, 200),
       state: "planning",
       outcome: "pending",
@@ -93,6 +108,7 @@ export class DiagnosticService {
         durationMs: 0,
       },
       tools: [],
+      specialists: [],
       eventCount: 0,
     };
 
@@ -159,6 +175,129 @@ export class DiagnosticService {
       durationMs: providerDiag.timing.durationMs,
       outcome: providerDiag.outcome,
       failureCode: providerDiag.failure?.code,
+    });
+  }
+
+  /**
+   * Records inference diagnostics for a run.
+   */
+  recordInference(runId: string, inferenceDiag: InferenceDiagnostic): void {
+    const run = this.activeRuns.get(runId);
+    if (!run) return;
+    run.inference = inferenceDiag;
+    run.updatedAt = new Date().toISOString();
+
+    this.recordEvent({
+      level: inferenceDiag.outcome === "failure" ? "error" : "info",
+      type: "inference_completed",
+      runId,
+      taskId: run.taskId,
+      message: `Inference (${inferenceDiag.provider}/${inferenceDiag.model ?? "default"}) finished with ${inferenceDiag.outcome} in ${inferenceDiag.timing.durationMs}ms`,
+      durationMs: inferenceDiag.timing.durationMs,
+      outcome: inferenceDiag.outcome,
+      failureCode: inferenceDiag.failure?.code,
+    });
+  }
+
+  /**
+   * Records memory diagnostics for a run.
+   */
+  recordMemory(runId: string, memoryDiag: MemoryDiagnostic): void {
+    const run = this.activeRuns.get(runId);
+    if (!run) return;
+    run.memory = memoryDiag;
+    run.updatedAt = new Date().toISOString();
+
+    this.recordEvent({
+      level: memoryDiag.outcome === "failure" ? "warn" : "info",
+      type: memoryDiag.operation === "store" ? "memory_stored" : "memory_queried",
+      runId,
+      taskId: run.taskId,
+      message: `Memory ${memoryDiag.operation} (${memoryDiag.count ?? 0} items) finished with ${memoryDiag.outcome} in ${memoryDiag.timing.durationMs}ms`,
+      durationMs: memoryDiag.timing.durationMs,
+      outcome: memoryDiag.outcome,
+      failureCode: memoryDiag.failure?.code,
+    });
+  }
+
+  /**
+   * Records final result diagnostics for a run.
+   */
+  recordFinalResult(runId: string, finalResultDiag: FinalResultDiagnostic): void {
+    const run = this.activeRuns.get(runId);
+    if (!run) return;
+    run.finalResult = finalResultDiag;
+    run.updatedAt = new Date().toISOString();
+  }
+
+  /**
+   * Records intent diagnostics for a run.
+   */
+  recordIntent(runId: string, intentDiag: IntentDiagnostic): void {
+    const run = this.activeRuns.get(runId);
+    if (!run) return;
+    run.intent = intentDiag;
+    run.updatedAt = new Date().toISOString();
+
+    const eventType: DiagnosticEventType = intentDiag.matched
+      ? intentDiag.route === "deterministic"
+        ? "intent_routed"
+        : "intent_detected"
+      : "intent_fallback";
+
+    this.recordEvent({
+      level: "info",
+      type: eventType,
+      runId,
+      taskId: run.taskId,
+      message: intentDiag.matched
+        ? `Intent [${intentDiag.intentId}] matched via alias "${intentDiag.aliasMatched}" -> ${intentDiag.route} (${intentDiag.targetHandler})`
+        : `Intent fallback: ${intentDiag.candidateSummary ?? "routed to Hermes"}`,
+      outcome: "success",
+    });
+  }
+
+  /**
+   * Records specialist subagent diagnostics for a run.
+   */
+  recordSpecialist(runId: string, specialistDiag: SpecialistDiagnostic): void {
+    const run = this.activeRuns.get(runId);
+    if (!run) return;
+    if (!run.specialists) {
+      run.specialists = [];
+    }
+    const existingIndex = run.specialists.findIndex((s) => s.subagentId === specialistDiag.subagentId);
+    if (existingIndex >= 0) {
+      run.specialists[existingIndex] = specialistDiag;
+    } else {
+      run.specialists.push(specialistDiag);
+    }
+    run.updatedAt = new Date().toISOString();
+
+    const eventType: DiagnosticEventType =
+      specialistDiag.status === "completed"
+        ? "specialist_completed"
+        : specialistDiag.status === "failed"
+        ? "specialist_failed"
+        : specialistDiag.status === "cancelled"
+        ? "specialist_cancelled"
+        : specialistDiag.status === "running"
+        ? "specialist_started"
+        : "specialist_spawned";
+
+    this.recordEvent({
+      level: specialistDiag.status === "failed" ? "warn" : "info",
+      type: eventType,
+      runId,
+      taskId: run.taskId,
+      message: `Specialist [${specialistDiag.displayName}] (${specialistDiag.specialistId}) ${specialistDiag.status}: "${specialistDiag.goal.slice(0, 100)}"`,
+      outcome:
+        specialistDiag.status === "completed"
+          ? "success"
+          : specialistDiag.status === "failed"
+          ? "failure"
+          : "pending",
+      durationMs: specialistDiag.timing?.durationMs,
     });
   }
 
@@ -318,6 +457,8 @@ export class DiagnosticService {
     const historyEntry: ExecutionHistoryEntry = {
       runId: run.runId,
       taskId: run.taskId,
+      sessionId: run.sessionId,
+      hermesRunId: run.hermesRunId,
       startedAt: run.timing.startedAt,
       completedAt: now,
       durationMs: run.timing.durationMs,
@@ -326,17 +467,62 @@ export class DiagnosticService {
       requestSummary: run.requestSummary,
       providerSummary: run.provider ? `${run.provider.provider} (${run.provider.timing.durationMs}ms)` : undefined,
       skillSummary: run.skill?.skillId,
+      specialistSummary:
+        run.specialists && run.specialists.length > 0
+          ? `${run.specialists.length} subagents (${run.specialists.map((s) => s.displayName).join(", ")})`
+          : undefined,
+      inferenceSummary: run.inference ? `${run.inference.provider} (${run.inference.timing.durationMs}ms)` : undefined,
+      memorySummary: run.memory ? `${run.memory.operation}: ${run.memory.count ?? 0} items` : undefined,
       toolSummaries: run.tools.map((t) => `${t.toolId}: ${t.outcome} (${t.timing.durationMs}ms)`),
       confirmationSummary: run.confirmation ? `${run.confirmation.toolId}: ${run.confirmation.state}` : undefined,
       verificationSummary: run.verification
         ? `${run.verification.toolId}: ${run.verification.outcome} (${run.verification.strategy})`
         : undefined,
+      finalResultSummary: run.finalResult?.speechSummary,
       failureSummary: run.failure?.message,
     };
 
     this.history.push(historyEntry);
     if (this.history.length > MAX_EXECUTION_HISTORY) {
       this.history.shift();
+    }
+
+    // Build unified correlated execution trace
+    const trace: ExecutionTrace = {
+      sessionId: run.sessionId ?? run.runId,
+      runId: run.runId,
+      hermesRunId: run.hermesRunId,
+      taskId: run.taskId,
+      startedAt: run.timing.startedAt,
+      completedAt: now,
+      durationMs: run.timing.durationMs,
+      state: run.state,
+      outcome: run.outcome,
+      session: {
+        sessionId: run.sessionId ?? run.runId,
+        startedAt: run.timing.startedAt,
+      },
+      intent: run.intent,
+      run: {
+        runId: run.runId,
+        hermesRunId: run.hermesRunId,
+        requestSummary: run.requestSummary,
+        state: run.state,
+      },
+      skill: run.skill,
+      specialists: [...(run.specialists ?? [])],
+      inference: run.inference,
+      memory: run.memory,
+      capabilities: [...run.tools],
+      confirmation: run.confirmation,
+      verification: run.verification,
+      finalResult: run.finalResult,
+      failure: run.failure,
+    };
+
+    this.traces.push(trace);
+    if (this.traces.length > MAX_EXECUTION_HISTORY) {
+      this.traces.shift();
     }
 
     this.recordEvent({
@@ -359,6 +545,20 @@ export class DiagnosticService {
   }
 
   /**
+   * Retrieves a correlated execution trace by runId.
+   */
+  getTrace(runId: string): ExecutionTrace | undefined {
+    return this.traces.find((t) => t.runId === runId);
+  }
+
+  /**
+   * Retrieves all correlated execution traces.
+   */
+  getTraces(): ExecutionTrace[] {
+    return [...this.traces];
+  }
+
+  /**
    * Produces a sanitized, validated DebugSnapshot.
    */
   getSnapshot(): DebugSnapshot {
@@ -373,6 +573,7 @@ export class DiagnosticService {
       events: JSON.parse(JSON.stringify(this.events.slice(-MAX_DIAGNOSTIC_EVENTS))),
       totals: { ...this.totals },
       recentVoice: JSON.parse(JSON.stringify(this.recentVoice.slice(-MAX_VOICE_HISTORY))),
+      traces: JSON.parse(JSON.stringify(this.traces.slice(-MAX_EXECUTION_HISTORY))),
     };
 
     return debugSnapshotSchema.parse(rawSnapshot);
@@ -386,6 +587,7 @@ export class DiagnosticService {
     this.history.length = 0;
     this.activeRuns.clear();
     this.recentVoice.length = 0;
+    this.traces.length = 0;
     this.currentActiveRunId = null;
     this.totals = {
       runs: 0,

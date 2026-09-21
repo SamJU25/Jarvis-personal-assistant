@@ -14,6 +14,6 @@ export function RendererRegistry({ card }: { card: ResultCard }) {
     case "document": return <Frame label={card.label} className="document-card"><div className="doc-mark">DOC</div><div><h3>{card.title}</h3><p>{card.summary}</p><span className="card-meta">{card.format} · {card.modifiedAt}</span></div></Frame>;
     case "research": return <Frame label={card.label} className="research-card"><h3>{card.topic}</h3><p>{card.summary}</p><Lines items={card.findings} /></Frame>;
     case "source": return <Frame label={card.label} className="source-result"><h3>{card.title}</h3><p>{card.sourceType}</p><code>{card.location}</code></Frame>;
-    case "generic": return <Frame label={card.label}><h3>{card.title}</h3><p>{card.body}</p></Frame>;
+    case "generic": return <Frame label={card.label}><h3>{card.title}</h3><p className="whitespace-pre-wrap font-mono text-xs">{card.body}</p></Frame>;
   }
 }

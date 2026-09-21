@@ -253,3 +253,42 @@ export const hermesResponseResponseSchema = z
   .passthrough();
 
 export type HermesResponseResponse = z.infer<typeof hermesResponseResponseSchema>;
+
+/**
+ * Hermes Skill item schema (from GET /v1/skills).
+ */
+export const hermesSkillSchema = z
+  .object({
+    name: z.string(),
+    description: z.string().optional(),
+    category: z.string().optional(),
+    path: z.string().optional(),
+    version: z.string().optional(),
+    author: z.string().optional(),
+  })
+  .passthrough();
+
+export type HermesSkill = z.infer<typeof hermesSkillSchema>;
+
+/**
+ * Hermes Skills response schema (GET /v1/skills).
+ */
+export const hermesSkillsResponseSchema = z.object({
+  object: z.string().optional(),
+  data: z.array(hermesSkillSchema).default([]),
+});
+
+export type HermesSkillsResponse = z.infer<typeof hermesSkillsResponseSchema>;
+
+/**
+ * Normalized Hermes run event.
+ */
+export const hermesRunEventSchema = z
+  .object({
+    event: z.string(),
+    data: z.record(z.string(), z.unknown()).or(z.string()),
+    run_id: z.string().optional(),
+  })
+  .passthrough();
+
+export type HermesRunEvent = z.infer<typeof hermesRunEventSchema>;

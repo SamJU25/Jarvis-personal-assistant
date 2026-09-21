@@ -1,4 +1,11 @@
-import type { JarvisTool, ToolMetadata } from "@/lib/contracts/tool";
+import type {
+  JarvisTool,
+  ToolMetadata,
+  ToolPermission,
+  CapabilityRiskLevel,
+  CapabilityClass,
+  ConfirmationPolicy,
+} from "@/lib/contracts/tool";
 
 export class ToolRegistryError extends Error {
   constructor(message: string) {
@@ -9,6 +16,46 @@ export class ToolRegistryError extends Error {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type AnyJarvisTool = JarvisTool<any, any>;
+
+export function defaultRiskLevel(permission: ToolPermission): CapabilityRiskLevel {
+  switch (permission) {
+    case "dangerous":
+      return "critical";
+    case "write":
+      return "medium";
+    case "memory":
+    case "read":
+    default:
+      return "low";
+  }
+}
+
+export function defaultCapabilityClass(permission: ToolPermission): CapabilityClass {
+  switch (permission) {
+    case "dangerous":
+      return "admin";
+    case "write":
+      return "write";
+    case "memory":
+      return "idempotent_write";
+    case "read":
+    default:
+      return "read";
+  }
+}
+
+export function defaultConfirmationPolicy(permission: ToolPermission): ConfirmationPolicy {
+  switch (permission) {
+    case "dangerous":
+      return "always";
+    case "write":
+      return "explicit";
+    case "memory":
+    case "read":
+    default:
+      return "none";
+  }
+}
 
 export class ToolRegistry {
   private readonly tools = new Map<string, AnyJarvisTool>();
@@ -57,6 +104,34 @@ export class ToolRegistry {
     return Array.from(this.tools.values());
   }
 
+  getCapability(id: string): (AnyJarvisTool & Required<Pick<JarvisTool, "riskLevel" | "capabilityClass" | "confirmationPolicy" | "verificationStrategy" | "reversible" | "timeoutMs" | "idempotent">>) | undefined {
+    const tool = this.tools.get(id);
+    if (!tool) return undefined;
+    return {
+      ...tool,
+      riskLevel: tool.riskLevel ?? defaultRiskLevel(tool.permission),
+      capabilityClass: tool.capabilityClass ?? defaultCapabilityClass(tool.permission),
+      confirmationPolicy: tool.confirmationPolicy ?? defaultConfirmationPolicy(tool.permission),
+      verificationStrategy: tool.verificationStrategy ?? (tool.permission === "write" ? `${tool.id}_verification` : "read_verification"),
+      reversible: tool.reversible ?? (tool.permission === "read" || tool.permission === "memory"),
+      timeoutMs: tool.timeoutMs ?? (tool.permission === "dangerous" ? 15000 : tool.permission === "write" ? 10000 : 5000),
+      idempotent: tool.idempotent ?? (tool.permission === "read" || tool.permission === "memory"),
+    };
+  }
+
+  isConfirmationRequired(id: string): boolean {
+    const tool = this.tools.get(id);
+    if (!tool) return false;
+    const policy = tool.confirmationPolicy ?? defaultConfirmationPolicy(tool.permission);
+    return policy === "explicit" || policy === "always";
+  }
+
+  getVerificationStrategy(id: string): string {
+    const tool = this.tools.get(id);
+    if (!tool) return "read_verification";
+    return tool.verificationStrategy ?? (tool.permission === "write" ? `${tool.id}_verification` : "read_verification");
+  }
+
   getMetadata(): readonly ToolMetadata[] {
     return Array.from(this.tools.values()).map((tool) => ({
       id: tool.id,
@@ -64,6 +139,14 @@ export class ToolRegistry {
       description: tool.description,
       permission: tool.permission,
       parameters: extractParametersFromSchema(tool.inputSchema),
+      riskLevel: tool.riskLevel ?? defaultRiskLevel(tool.permission),
+      capabilityClass: tool.capabilityClass ?? defaultCapabilityClass(tool.permission),
+      confirmationPolicy: tool.confirmationPolicy ?? defaultConfirmationPolicy(tool.permission),
+      verificationStrategy: tool.verificationStrategy ?? (tool.permission === "write" ? `${tool.id}_verification` : "read_verification"),
+      reversible: tool.reversible ?? (tool.permission === "read" || tool.permission === "memory"),
+      timeoutMs: tool.timeoutMs ?? (tool.permission === "dangerous" ? 15000 : tool.permission === "write" ? 10000 : 5000),
+      idempotent: tool.idempotent ?? (tool.permission === "read" || tool.permission === "memory"),
+      auditPolicy: tool.auditPolicy ?? { logParameters: true },
     }));
   }
 }
