@@ -1,183 +1,383 @@
-# JARVIS
+# JARVIS — Personal AI Operating Assistant
 
-JARVIS is a local-first personal AI operating assistant. This repository implements **Phase 12: Reliability and Polish** (Phases 1 through 11 preserved and reused).
+[![Tests](https://img.shields.io/badge/tests-422%20passed-brightgreen.svg)]()
+[![Quality Gates](https://img.shields.io/badge/quality%20gates-lint%20%7C%20types%20%7C%20build%20passing-brightgreen.svg)]()
+[![Next.js](https://img.shields.io/badge/Next.js-16.3.5%20Turbopack-black.svg)]()
+[![React](https://img.shields.io/badge/React-19.2.8-blue.svg)]()
+[![Node](https://img.shields.io/badge/Node.js-24.19.0-green.svg)]()
+[![Local Voice](https://img.shields.io/badge/voice-Whisper%20%2B%20Kokoro%20(Local)-orange.svg)]()
+[![Hermes Agent](https://img.shields.io/badge/agent-Nous%20Hermes%200.21.3-purple.svg)]()
 
-The interface is a cinematic command center rather than a chatbot. It includes a state-driven JARVIS core, system context, activity/results/sources, a command surface, settings, and a development-only debug shell.
+**JARVIS** is a local-first, privacy-respecting personal AI operating assistant designed as a cinematic, high-performance command center rather than a simple chat interface. It combines multi-provider agent reasoning, a pinned tool security boundary, human confirmation gates for writes, application-owned deterministic verification, local SQLite memory, Obsidian and Google Workspace integrations, and an entirely local voice pipeline.
 
-## Current environment
+---
 
-Verified on Windows with:
+## Architecture Overview
 
-- Node.js 24.19.0
-- npm 11.17.0
-- Git 2.55.0
-- Windows PowerShell 5.1
-- Next.js 16.3.5
-- React 19.2.8
+```
+                      ┌──────────────────────────────────────────────┐
+                      │             JARVIS Command Shell             │
+                      │  (Next.js App Router, Tailwind, Framer Mot)  │
+                      └──────────────────────┬───────────────────────┘
+                                             │
+                       User Input (Typed or Voice Transcribed)
+                                             │
+                                             ▼
+                      ┌──────────────────────────────────────────────┐
+                      │              AgentRuntime (Server)           │
+                      │  - Skill Selection & Workflow Orchestration  │
+                      │  - Untrusted Memory & Context Injection      │
+                      │  - Multi-Turn Conversation History Formatter │
+                      │  - Deterministic Fast-Path (<10ms Queries)   │
+                      └──────────────────────┬───────────────────────┘
+                                             │
+                       Selectable Reasoning Provider Boundary
+                                             │
+          ┌──────────────────────────────────┼──────────────────────────────────┐
+          ▼                                  ▼                                  ▼
+┌──────────────────┐               ┌──────────────────┐               ┌──────────────────┐
+│  HermesProvider  │ (Default)     │  OllamaProvider  │ (Fallback)    │CommandCodeProvide│
+│  - Hermes API    │               │  - Local Ollama  │               │  - Headless Node │
+│  - Runs/SSE API  │               │  - qwen3.5:4b    │               │  - Non-interact. │
+│  - Session Track │               │  - Native Tools  │               │  - Plan Permiss. │
+│  - Pinned Tools  │               │  - GPU/CPU Accel │               │  - Bounded Conv. │
+└─────────┬────────┘               └─────────┬────────┘               └─────────┬────────┘
+          │                                  │                                  │
+          └──────────────────────────────────┼──────────────────────────────────┘
+                                             │
+                             Decision & Action Proposal
+                                             │
+                                             ▼
+                      ┌──────────────────────────────────────────────┐
+                      │           Tool Registry & Permissions        │
+                      │  - 17 Typed JarvisTool Specifications        │
+                      │  - Read Operations: Direct Execution         │
+                      │  - Write Operations: Intercepted & Gated     │
+                      └──────────────────────┬───────────────────────┘
+                                             │
+                                 Is Action a Write Operation?
+                                       /           \
+                                 [YES]               [NO]
+                                   /                   \
+                                  ▼                     ▼
+          ┌─────────────────────────────────┐   ┌──────────────────────────────┐
+          │     Human Confirmation Gate     │   │     Direct Tool Execution    │
+          │  - Single-use Token Generation  │   │  - Obsidian Read / Search    │
+          │  - 60s TTL Expiry Replay Reject │   │  - Gmail / Calendar / Drive  │
+          │  - Dual Approval (UI Card/Voice)│   │  - Local Memory Search/Read  │
+          │  - Strict Draft-Only for Email  │   │  - System Time & Demo Tools  │
+          └────────────────┬────────────────┘   └──────────────┬───────────────┘
+                           │ Approved                          │
+                           ▼                                   │
+          ┌─────────────────────────────────┐                  │
+          │     Execute Write Operation     │                  │
+          │  - create_note                  │                  │
+          │  - create_google_doc            │                  │
+          │  - draft_email                  │                  │
+          └────────────────┬────────────────┘                  │
+                           │                                   │
+                           └─────────────────┬─────────────────┘
+                                             │
+                                             ▼
+                      ┌──────────────────────────────────────────────┐
+                      │         Formal Verification Registry         │
+                      │  - Application-Owned Empirical Checks        │
+                      │  - On-Disk Containment & fs.stat Validation  │
+                      │  - Document ID & Live Draft Validation       │
+                      │  - Model Claims ("verified": true) REJECTED  │
+                      └──────────────────────┬───────────────────────┘
+                                             │
+                                  Task Lifecycle Complete
+                                             │
+                                             ▼
+                      ┌──────────────────────────────────────────────┐
+                      │     Diagnostic & Observability Engine        │
+                      │  - 8-Stage Lifecycle Telemetry Pipeline      │
+                      │  - Redaction of Keys, Tokens, Paths, Audio   │
+                      │  - Accurate performance.now() Stage Timings  │
+                      │  - Non-Blocking Local TTS Speech Synthesis   │
+                      └──────────────────────────────────────────────┘
+```
 
-Command Code is used to provide the headless agent provider runtime. The JARVIS app launches Command Code directly via `node` + its entry point — never through a shell. See `docs/ARCHITECTURE.md` and `docs/SECURITY.md` for the security boundaries.
+---
 
-## Run locally
+## Core Capabilities
+
+### 1. Multi-Provider Agent Architecture
+- **Hermes Agent (`HermesProvider`)**: Primary agent runtime connecting to the checked-out official Nous Research Hermes API Server (`v0.21.3`) at `http://127.0.0.1:8642`. Supports the Runs API (`POST /v1/runs`), Chat Completions, Responses API, session tracking via `X-Hermes-Session-Id`, and live `AbortSignal` cancellation.
+- **Local Ollama (`OllamaProvider`)**: High-performance local reasoning provider connecting directly to Ollama at `http://localhost:11434` with `qwen3.5:4b` (or custom models). Automatically discovered and serves as an instant fallback when Hermes is offline.
+- **Command Code (`CommandCodeProvider`)**: Headless Command Code provider using plan permissions in a bounded conversation loop.
+- **Runtime Provider Switching**: Change the active provider via `.env.local` (`JARVIS_PROVIDER`), settings API (`/api/agent/provider`), or the settings interface.
+
+### 2. Pinned Hermes Tool Safety Boundary
+To prevent autonomous agents from running unrestricted destructive commands, Hermes's API-server toolset is pinned and strictly enforced:
+- **Enabled (Read-Oriented Only)**: `web`, `clarify`, `session_search`
+- **Disabled (Zero Host Risk)**: `terminal`, `code_execution`, `file`, `computer_use`, `delegation`
+- **Runtime Enforcement**: Automatically verified via authenticated `GET /v1/toolsets` before execution.
+
+### 3. Application-Owned Write Actions & Human Confirmation
+- **Strict Human-in-the-Loop**: The agent cannot execute writes autonomously or claim prior approval.
+- **Supported Write Operations**:
+  - `create_note`: Obsidian note creation with vault path containment.
+  - `create_google_doc`: Google Drive document creation via safe GWS CLI.
+  - `draft_email`: Gmail draft creation only. **Sending emails is strictly forbidden.**
+- **Replay Protection**: Cryptographic confirmation tokens (`conf-...`) feature single-use atomic consumption and a 60-second Time-To-Live (TTL).
+- **Dual Approval Modalities**: Users can confirm or cancel through visual Confirmation Preview Cards in the UI or natural voice commands ("confirm", "proceed", "cancel").
+
+### 4. Deterministic Formal Verification
+- **Evidence Over Assertions**: The system never accepts model claims (e.g. `"verified": true` or `"note created"`) as proof.
+- **Deterministic Strategies**:
+  - `CreateNoteVerificationStrategy`: Validates on-disk file existence via `fs.stat`, verifies vault containment without path traversal, and confirms content integrity.
+  - `CreateGoogleDocVerificationStrategy`: Verifies non-empty document IDs, title matches, and safe URL schemes.
+  - `DraftEmailVerificationStrategy`: Validates draft-only existence in Gmail and rejects sent messages.
+- **Task Lifecycle**: Formal state progression (`queued` → `planning` → `executing` → `waiting_for_approval` → `verifying` → `completed` | `failed` | `cancelled`).
+
+### 5. 100% Local Voice Pipeline
+- **Speech-to-Text (STT)**: Local Whisper (`whisper.cpp` high-performance server) on `http://127.0.0.1:8080` with the `ggml-base.en.bin` model.
+- **Text-to-Speech (TTS)**: Local Kokoro FastAPI server on `http://127.0.0.1:8880` utilizing the `am_adam` male voice (`kokoro-v0_19.onnx`).
+- **Privacy First**: Audio is processed entirely in memory. Raw audio is never saved to disk or persistent storage.
+- **Real-Time Barge-In**: User speech interrupts assistant voice playback instantly and resets the visual core to listening state.
+- **Zero Cloud APIs**: No dependencies on ElevenLabs, OpenAI Audio, or cloud services.
+
+### 6. Persistent Local Memory
+- **Native SQLite Store**: Cross-session persistent storage using Node.js built-in `node:sqlite` (`.jarvis/memory.db`).
+- **Secret Rejection**: Automatic regex and entropy scanning rejects passwords, private keys, and API tokens before storage.
+- **Explicit Authorization**: Casual conversation is never silently stored. Writes require explicit user intent ("Remember that...", "Store this...").
+- **Bounded Context Injection**: Top semantic matches (max 5 items, 2,000 characters) are retrieved and injected as untrusted reference context.
+
+### 7. Integrations
+- **Obsidian Vault**: Local Markdown vault search, note reading, and note creation with strict directory traversal protection.
+- **Google Workspace (GWS CLI)**: Server-side execution layer invoking Google Workspace CLI (`search_gmail`, `read_gmail`, `get_calendar_events`, `search_drive`, `read_drive_file`, `create_google_doc`, `draft_email`) with `shell: false` argument pinning. External content is strictly treated as untrusted data.
+- **Skills System**: 5 core reusable workflows: `meeting-prep`, `morning-briefing`, `capture-note`, `research`, and `loose-ends`.
+
+### 8. Observability & Debug Shell (`/debug`)
+- **8-Stage Pipeline**: Real-time visualization of `RUN` → `PROVIDER` → `SKILL` → `TOOLS` → `CONFIRMATION` → `VERIFICATION` → `VOICE` → `FINAL RESULT`.
+- **Sanitization Barrier**: Server-side redactor strips Bearer tokens, passwords, absolute disk paths, raw GWS commands, and audio data from telemetry.
+- **Read-Only**: Debug shell cannot trigger side-effects, mutate state, or bypass security boundaries.
+
+---
+
+## Verified Environment
+
+Tested and verified on Windows 11 with:
+- **Node.js**: `v24.19.0`
+- **npm**: `11.17.0`
+- **Next.js**: `16.3.5` (Turbopack)
+- **React**: `19.2.8`
+- **TypeScript**: `5.x`
+- **Python**: `3.11.16` (in `.jarvis/voice/kokoro/.venv` and `f:\hermes-agent\.venv`)
+- **Ollama**: `v0.5.x+` with model `qwen3.5:4b`
+- **Hermes Agent**: `0.21.3` (Commit `5bb314f`)
+
+---
+
+## Getting Started
+
+### 1. Installation
+
+Clone the repository and install dependencies:
 
 ```powershell
+git clone https://github.com/SamJU25/Jarvis-personal-assistant.git
+cd Jarvis-personal-assistant
 npm install
+```
+
+### 2. Environment Configuration
+
+Create a `.env.local` file in the root directory (based on `.env.example`):
+
+```env
+# Provider Configuration
+JARVIS_PROVIDER=hermes
+JARVIS_OLLAMA_BASE_URL=http://localhost:11434
+JARVIS_OLLAMA_MODEL=qwen3.5:4b
+JARVIS_OLLAMA_KEEP_ALIVE=15m
+JARVIS_OLLAMA_THINK=false
+JARVIS_AGENT_TIMEOUT_MS=60000
+
+# Hermes Configuration
+HERMES_API_URL=http://127.0.0.1:8642
+HERMES_API_KEY=your-hermes-api-key-32ch-min
+HERMES_TIMEOUT_MS=60000
+
+# Obsidian Vault (Local server path)
+OBSIDIAN_VAULT_PATH=F:\Your\Obsidian\Vault
+
+# Google Workspace CLI
+JARVIS_GWS_EXECUTABLE=gws
+
+# Local Voice Services
+JARVIS_WHISPER_BASE_URL=http://127.0.0.1:8080
+JARVIS_WHISPER_LANGUAGE=en
+JARVIS_KOKORO_BASE_URL=http://127.0.0.1:8880
+JARVIS_KOKORO_MODEL=kokoro
+JARVIS_KOKORO_VOICE=am_adam
+JARVIS_KOKORO_SPEED=1.0
+```
+
+> [!NOTE]
+> `.env.local` is strictly ignored by Git to prevent leaking local paths or keys.
+
+---
+
+### 3. Starting Local Services
+
+#### Local Voice Subsystem (Whisper + Kokoro)
+Start both voice engines via PowerShell:
+
+```powershell
+.\.jarvis\voice\runtime\start-voice.ps1
+```
+
+To stop voice servers:
+```powershell
+.\.jarvis\voice\runtime\stop-voice.ps1
+```
+
+Health check endpoints:
+- Whisper STT: `http://127.0.0.1:8080/health`
+- Kokoro TTS: `http://127.0.0.1:8880/health`
+
+#### Hermes API Server
+In the adjacent `hermes-agent` directory:
+
+```powershell
+cd ..\hermes-agent
+.\.venv\Scripts\activate
+python run_api_server_test.py
+```
+
+Health check endpoints:
+- Hermes Health: `http://127.0.0.1:8642/health`
+- Hermes Toolsets: `http://127.0.0.1:8642/v1/toolsets`
+
+---
+
+### 4. Running JARVIS
+
+Development mode:
+```powershell
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
-
-### Environment configuration
-
-Create `.env.local`:
-
-```env
-# Phase 2: Agent Provider
-JARVIS_COMMAND_CODE_ENTRY=C:\path\to\node_modules\command-code\dist\index.mjs
-
-# Phase 4: Obsidian Integration (server-side only, never exposed to browser)
-OBSIDIAN_VAULT_PATH=C:\path\to\your\ObsidianVault
-```
-
-- **Command Code Provider:** Without `JARVIS_COMMAND_CODE_ENTRY`, `/api/agent/status` reports provider as unavailable.
-- **Obsidian Vault:** Without `OBSIDIAN_VAULT_PATH`, Obsidian status reports `Not configured`. When configured and valid, it reports `Available`. If the path does not exist or points to a non-directory, it reports `Unavailable` or `Invalid configuration`. The absolute vault path is never exposed to the client.
-
-Useful commands:
-
+Production build and launch:
 ```powershell
-npm run test
-npm run lint
-npm run typecheck
 npm run build
 npm start
 ```
 
-## What is implemented
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-- **Phase 1 (Visual Shell):** Cinematic JARVIS core with 7 visual states, responsive layout, trusted semantic card renderers, settings shell, and development debug shell (`/debug`).
-- **Phase 2 (Agent Provider):** Server-side headless provider boundary, streaming NDJSON parser, Zod output validation, timeout, cancellation (abort), and truthful status.
-- **Phase 3 (Tool Registry & Execution Loop):** Generic application-owned `ToolRegistry`, typed `JarvisTool` contracts, schema validation, permission boundaries (`read` vs `write`), tool execution lifecycle events, and real `executing` UI state.
-- **Phase 4 (Obsidian Integration):** Server-side vault configuration (`OBSIDIAN_VAULT_PATH`), canonical path containment (prevents `../`, symlinks escaping), `search_vault`, `read_note`, and safe `create_note` write definition.
-- **Phase 5 (Runtime Skill/Process System):**
-  - **Tools vs. Skills Distinction:** Tools define *what* JARVIS can do; skills define *how* JARVIS combines tools and reasoning for recurring workflows.
-  - **Automatic Skill Selection:** `selectSkill()` evaluates semantic intent naturally.
-  - **Five Core Skills (`skills/<id>/SKILL.md`):** `meeting-prep`, `morning-briefing`, `capture-note`, `research`, and `loose-ends`.
-- **Phase 6 (Google Workspace Integration):**
-  - **Safe GWS CLI Execution:** Server-side execution layer invoking the system's authenticated GWS CLI (`JARVIS_GWS_EXECUTABLE`) using fixed argument arrays, `shell: false`, timeout bounding, and error sanitization.
-  - **Five Read-Only Tools:** `search_gmail`, `read_gmail`, `get_calendar_events`, `search_drive`, and `read_drive_file` registered through `ToolRegistry`.
-  - **Untrusted Content Handling:** All email, calendar, and drive content is treated strictly as data. Injected instructions can never alter system prompts or escalate permissions.
-  - **Skill Upgrades:** Skills now leverage real Google Workspace data (meeting prep queries calendar/email/drive, morning briefing inspects schedules/inbox, research scans Drive docs, loose-ends checks follow-ups).
-  - **Truthful Status:** Health checks report `Available`, `Not configured`, `Unauthenticated`, or `Unavailable` without leaking paths or tokens.
-- **Phase 7 (Persistent Memory):**
-  - **Local-First SQLite Storage:** Persistent cross-session store using Node.js native `node:sqlite` (`.jarvis/memory.db`). Zero external npm dependencies.
-  - **Four Semantic Memory Tools:** `search_memory` (`read`), `list_memory` (`read`), `store_memory` (`memory`), and `delete_memory` (`memory`).
-  - **Explicit Authorization Guardrails:** Casual conversation ("The weather is nice") cannot silently store memories. Only explicit user intent ("Remember that...", "Forget that...") permits writes.
-  - **Secret & Credential Rejection:** Passwords, API keys (OpenAI, GitHub, AWS, Google), private cryptographic keys, and tokens are scanned and rejected before storage.
-  - **Bounded Context Injection:** Relevant memories are retrieved (max 5 items, 2,000 characters) and injected into agent instructions under an untrusted `[MEMORY CONTEXT]` block.
-  - **Inspection API & UI:** Server-side `/api/memory` endpoint and settings/debug panels for inspecting and deleting stored memories.
-- **Phase 7.5 (Local Ollama Provider):**
-  - **Second Selectable Provider:** Local Ollama running alongside Command Code under the unified `AgentProvider` contract (`src/lib/agent/providers/ollama-provider.ts`).
-  - **Provider Independence:** The rest of JARVIS (AgentRuntime, ToolRegistry, all 15 tools, skills, memory, Obsidian, Google Workspace, StructuredResult) does not care which reasoning provider is active.
-  - **Local-Only & Zero Cloud Accounts:** Connects strictly to local Ollama (`JARVIS_OLLAMA_BASE_URL`, default `http://localhost:11434`).
-  - **Model Auto-Discovery & Health:** Discovers installed models via `/api/tags` and reports truthful status (`Available`, `Model unavailable`, `Unavailable`).
-  - **Tool-Calling Adapter:** Normalizes native Ollama `tool_calls` and JSON tool calls into `AgentDecision` structures.
-  - **Active Provider Management:** Switchable via `JARVIS_PROVIDER` or Settings UI (`/api/agent/provider`).
-- **Phase 8 (Fully Local Voice):**
-  - **100% Local & Offline-Capable Voice:** Local Whisper/whisper.cpp for speech-to-text (STT) and local Kokoro for text-to-speech (TTS). Zero cloud voice APIs, zero API keys, and zero external dependencies (no ElevenLabs).
-  - **Project-Local Runtime Isolation:** Entire voice subsystem resides inside `.jarvis/voice/` (`whisper/`, `kokoro/`, `models/`, `runtime/`, `logs/`). Model files (`ggml-base.en.bin`, `kokoro-v0_19.onnx`, `voices-v1.0.bin`) are intentionally kept outside Git.
-  - **Single Startup/Stop Workflows:** `.jarvis/voice/runtime/start-voice.ps1` and `stop-voice.ps1` launch and terminate local voice servers with health verification.
-  - **Unified Reasoning Seam:** Voice input is strictly an interface layer. Both typed text and committed voice transcripts route through the identical `submitAgentRequest(message)` seam into `AgentRuntime` and the existing tools, skills, memory, and reasoning providers.
-  - **Mandatory Real-Time Barge-In:** Immediate interruption of speaking turns cancels active TTS synthesis and playback, switches state to `listening`, and discards stale audio.
-  - **Ephemeral Audio Privacy:** Audio captures are processed in memory only and discarded immediately after transcription; no recordings are persisted to disk or database.
-  - **Voice Endpoints & Truthful Status:** `/api/voice/status`, `/api/voice/transcribe`, and `/api/voice/synthesize` reporting truthful status for Whisper, Kokoro, microphone, and speaker.
-  - **Accessible Microphone Control:** Accessible mic toggle button with active listening pulse, speaking hints, and full keyboard navigation.
+---
 
-- **Phase 9 (Write Actions and Human Confirmation):**
-  - **Application-Owned Confirmation Flow:** Intercepts write tool proposals (`create_note`, `create_google_doc`, `draft_email`). The reasoning model can only propose a write — it cannot authorize execution, claim prior approval, or bypass confirmation.
-  - **Confirmation Service & Replay Protection:** Thread-safe singleton `ConfirmationService` managing pending confirmations with single-use atomic consumption (`pending` -> `consumed`), 60-second TTL expiry, and replay rejection (HTTP 409).
-  - **Three Supported Write Tools:**
-    - `create_note`: Obsidian note creation with directory creation and title sanitization.
-    - `create_google_doc`: Google Docs creation via safe GWS CLI wrapper (`shell: false`).
-    - `draft_email`: Gmail draft creation only. Strictly NO `send_email` capability exists.
-  - **Dual Confirmation Channels (UI & Voice):** Visual Confirmation Preview card rendered in CenterStage with action badges, targets, previews, and accessible Confirm/Cancel buttons. Voice affirmations ("yes", "confirm", "go ahead") and cancellations ("no", "cancel", "stop") route to the confirmation boundary.
-  - **Server Execution Seam:** `/api/agent/confirm` executes the exact validated parameters stored in the pending confirmation, validates outputs, and returns truthful `StructuredResult`.
+## Verification & Quality Gates
 
-- **Phase 10 (Formal Verification and Task Lifecycle):**
-  - **Formal Task Lifecycle:** Explicit lifecycle progression: `queued` → `planning` → `executing` → `waiting_for_approval` → `verifying` → `completed` | `failed` | `cancelled`. Tool execution completion is strictly distinguished from task completion.
-  - **Application-Owned Verification Layer:** All verification occurs in server-side application code (`src/lib/verification/`). Model natural-language assertions (e.g., `"verified": true`, `"success": true`) are rejected as proof.
-  - **Strategy Pattern & VerificationRegistry:** Pluggable `VerificationStrategy` interface mapped by tool:
-    - `create_note`: Checks on-disk file existence via `fs.stat()`, vault containment via `resolveVaultPath()`, and content matching.
-    - `create_google_doc`: Validates normalized result for non-empty `documentId`, matching title, and safe link.
-    - `draft_email`: Enforces draft-only safety constraints (strictly rejects sent messages), validates `draftId`, recipient, and subject.
-    - Read tools: Direct schema and structural output verification.
-  - **Bounded Execution & Stale-Run Protection:** 5,000ms bounded verification timeout, in-memory `TaskTracker`, and race protection preventing late verification results from older runs from modifying or resurrecting newer runs.
-  - **Cancelled Run Preservation:** Interrupted or cancelled runs cannot be resurrected or marked completed by late tool or verification outcomes.
-  - **Truthful Status & Spoken Explanations:** Verification failures transition task state to `failed` and speak truthful failure summaries ("I couldn't verify that the note was created") rather than false successes.
+JARVIS enforces strict quality gates. Every release and milestone passes all unit, integration, linting, typechecking, and live verification suites:
 
-- **Phase 11 (Observability Expansion):**
-  - **Canonical Diagnostic Model:** Zod-validated contracts (`src/lib/contracts/diagnostics.ts`) defining diagnostic levels, event types, task run states, outcomes, finite failure codes, timings, and bounded snapshots.
-  - **Application-Owned Diagnostic Service:** Singleton `DiagnosticService` (`src/lib/diagnostics/service.ts`) capturing structured diagnostic events, maintaining active runs, storing bounded recent execution history (max 50 runs, FIFO eviction), maintaining recent event log (max 200 events, FIFO eviction), and recording voice transaction timings without audio persistence.
-  - **Real Execution Timings:** Accurate wall-clock millisecond timing measurements (`performance.now()`) across complete runs, reasoning providers, skills, tools, confirmation delays, verification strategies, voice transcription, and voice synthesis.
-  - **Finite Failure Classification:** 17 stable, application-owned failure categories (`provider_unavailable`, `tool_permission_denied`, `verification_failed`, `stale_run`, etc.) rejecting arbitrary model-invented error codes.
-  - **Strict Browser Sanitization Boundary:** Server-side sanitization (`src/lib/diagnostics/sanitizer.ts`) redacting API keys, Bearer tokens, passwords, absolute filesystem paths (Windows & Unix), raw GWS commands, and raw audio before serialization to the browser.
-  - **Enhanced Read-Only Debug Shell (`/debug`):** Interactive, read-only developer dashboard displaying the active 8-stage lifecycle pipeline (`RUN` → `PROVIDER` → `SKILL` → `TOOLS` → `CONFIRMATION` → `VERIFICATION` → `VOICE` → `FINAL RESULT`), live event stream with level filtering, totals metrics banner, bounded execution history, and Phase 8 voice telemetry. Strictly devoid of any state-mutating controls.
-
-- **Phase 12 (Reliability and Polish):**
-  - **Latency Optimization & Hardening:** Fixed 40+ second reasoning delay by disabling unneeded thinking tokens (`think: false`) during Turn 2 synthesis and setting keep-alive (`keep_alive: 15m`), cutting simple read latencies from ~45s to ~2.4–3.0s (~93% reduction).
-  - **Deterministic Task Fast-Path:** Safe, unambiguous queries (e.g., local time queries) are detected and resolved directly via deterministic tool execution and formal verification in <10ms, eliminating redundant model round-trips.
-  - **Natural Multi-Turn Conversation:** Assistant turns in conversation history are enriched with structured summaries of cards and retrieved sources (`formatAssistantTurn`), enabling seamless follow-up questions ("Summarize that in three bullets") without prompt bloat.
-  - **Tool Argument Coercion & Vault Robustness:** String-to-number coercion (`z.coerce.number()`) across Obsidian, Google Workspace, and Memory tools prevents small LLM format deviations from failing execution. `readVaultNote` adds extension normalization and vault-wide basename fallback.
-  - **Robust Decision Normalization:** Safe fallback for unrecognized card types into valid `generic` cards, and comprehensive mapping of model state values (`incomplete`, `done`, `pending`) to canonical lifecycle states.
-  - **Voice Robustness:** Asynchronous non-blocking TTS architecture ensures speech failures never invalidate successful agent results. Real-time barge-in immediately interrupts playback.
-
-### Local Voice Runtime Management
-
+### Automated Test Suite
 ```powershell
-# Start both Whisper STT (8080) and Kokoro TTS (8880) with health checks
-.\.jarvis\voice\runtime\start-voice.ps1
+npm run test
+```
+*Result: 69 test files passed, 422 unit and integration tests passing.*
 
-# Stop local voice runtime
-.\.jarvis\voice\runtime\stop-voice.ps1
+### Code Quality & Types
+```powershell
+npm run lint         # 0 errors, 0 warnings
+npm run typecheck    # 0 TypeScript compilation errors
+npm run build        # Successful Next.js 16 Turbopack production build
 ```
 
-- **Hardware Requirements:** 4+ CPU cores, 8GB+ RAM. Tested on Windows x64. Whisper and Kokoro run completely offline on CPU with minimal footprint (<350MB RAM combined).
-- **Troubleshooting:**
-  - If ports 8080 or 8880 are occupied, check logs in `.jarvis/voice/logs/`.
-  - Check service endpoints directly: `http://127.0.0.1:8080/health` (Whisper) and `http://127.0.0.1:8880/health` (Kokoro).
+### Live Runtime Verification
+Verify all 7 end-to-end runtime operations against the real Hermes API server and local Ollama:
 
-## What is mocked / restricted
+```powershell
+npx tsx scripts/verify-phase3-live.ts
+```
 
-- Everything under `src/lib/mock/` is Phase 1 sample presentation data used only for the initial idle preview.
-- Browser automation and terminal execution are not implemented.
-- Email sending is strictly prohibited; only `draft_email` (creating a draft in Gmail) is supported.
-- Calendar event deletion/modification is not implemented.
-- Automatic write execution is blocked; every write action requires explicit human confirmation via `/api/agent/confirm`.
-- Formal verification means application-level empirical verification (file existence, schema conformity, returned entity IDs); it is not a mathematical theorem prover.
-- Diagnostics and observability are visibility-only; `/debug` cannot force execution, bypass confirmation, or alter permissions.
-- Phase 12 (Reliability & Polish) is complete. Future phases after Phase 12 are NOT implemented. No persistent execution databases, distributed tracing, or external cloud telemetry services exist.
+Output:
+- `[Check 0]`: Pinned Hermes toolsets verified via `GET /v1/toolsets` (Zero dangerous tools enabled).
+- `[Test 1]`: Hello JARVIS conversational greeting verified.
+- `[Test 2]`: Follow-up query with session context continuity verified.
+- `[Test 3]`: Real read task execution (`get_current_time`) verified.
+- `[Test 4]`: Request cancellation via `AbortSignal` verified.
+- `[Test 5]`: Provider failure handling and graceful degradation verified.
+- `[Test 6]`: Write tool proposal human confirmation token creation verified.
+- `[Test 7]`: Post-write empirical verification on disk passed.
 
-## Project map
+---
 
-- `skills/` — human and model-readable skill workflow definitions (`meeting-prep`, `morning-briefing`, `capture-note`, `research`, `loose-ends`)
-- `src/app/` — App Router routes (`/`, `/settings`, `/debug`) and API endpoints (`/api/agent`, `/api/agent/confirm`, `/api/agent/provider`, `/api/agent/status`, `/api/debug`, `/api/memory`, `/api/voice/*`)
-- `src/components/jarvis/` — shell orchestrator, animated core, command surface, and intelligence panel
-- `src/components/debug/` — read-only debug shell, lifecycle pipeline visualizer, execution history, and event stream
-- `src/components/cards/` — trusted semantic renderer registry (meeting, email, note, research, confirmation, etc.)
-- `src/components/activity/` — tool, provider, and skill activity status presentation
-- `src/lib/contracts/` — typed schemas and boundaries (tools, skills, results, agent API, provider, confirmation, verification, task, diagnostics)
-- `src/lib/agent/` — server-side `AgentRuntime`, loop orchestration, system prompts, status inspection
-- `src/lib/agent/providers/` — reasoning providers: `CommandCodeProvider`, `OllamaProvider`, transport adapters, active provider registry
-- `src/lib/skills/` — skill loader, centralized `SkillRegistry`, and semantic `selectSkill`
-- `src/lib/tools/` — generic application `ToolRegistry` and demo tools
-- `src/lib/confirmation/` — confirmation service, TTL tracking, voice confirmation intent matching
-- `src/lib/verification/` — application-owned verification registry, service, and tool-specific strategies
-- `src/lib/diagnostics/` — application-owned diagnostic service, sanitization boundary, structured logger, and in-memory stores
-- `src/lib/memory/` — local SQLite memory store, secret scanner, authorization policy, service, and tools
-- `src/lib/obsidian/` — server-only vault config, path containment, scanner/reader, and tool definitions
-- `src/lib/google/` — safe GWS CLI wrapper, normalizers, and read/write tools
-- `src/lib/voice/` — fully local Whisper STT and Kokoro TTS integration, ephemeral audio handling
-- `src/lib/shell/` — visual application state and reducer
-- `tests/` — unit, integration, security, confirmation, verification, and diagnostics test suites
+## Project Structure
 
-Read `JARVIS_MASTER_PROMPT.md` for the complete product vision and `AGENTS.md` for active development rules.
+```text
+f:\Jarvis\
+├── .agents/                      # Agent workflow configurations & skills
+├── .commandcode/                 # Command Code runtime metadata
+├── .env.example                  # Secret-free environment template
+├── .gitignore                    # Strict exclusions for databases, models, envs
+├── .jarvis/                      # Local storage and voice runtime
+│   ├── memory.db                 # Local SQLite database (ignored by git)
+│   └── voice/                    # Offline voice subsystem
+│       ├── kokoro/               # Kokoro TTS server & ONNX models
+│       ├── whisper/              # Whisper.cpp binary & GGML models
+│       └── runtime/              # start-voice.ps1 & stop-voice.ps1
+├── docs/                         # Architecture, roadmap, security docs
+├── public/                       # Static public assets
+├── scripts/                      # Verification and test runners
+│   └── verify-phase3-live.ts     # End-to-end live runtime verification suite
+├── skills/                       # Skill markdown workflow definitions
+│   ├── capture-note/
+│   ├── loose-ends/
+│   ├── meeting-prep/
+│   ├── morning-briefing/
+│   └── research/
+├── src/
+│   ├── app/                      # Next.js App Router
+│   │   ├── api/                  # Server-side API routes
+│   │   │   ├── agent/            # /api/agent, /confirm, /provider, /status
+│   │   │   ├── debug/            # /api/debug
+│   │   │   ├── memory/           # /api/memory
+│   │   │   └── voice/            # /api/voice/* (transcribe, synthesize)
+│   │   ├── debug/                # Enhanced Debug Shell UI
+│   │   ├── settings/             # Settings Shell UI
+│   │   ├── layout.tsx            # Application root layout
+│   │   └── page.tsx              # Homepage / Cinematic Shell
+│   ├── components/
+│   │   ├── activity/             # Activity stream & timeline components
+│   │   ├── cards/                # Semantic card renderers (Email, Meeting, Doc)
+│   │   ├── confirmations/        # Confirmation preview card UI
+│   │   ├── debug/                # Pipeline stages & telemetry visualizers
+│   │   └── jarvis/               # Animated core, command bar, context rail
+│   └── lib/
+│       ├── agent/                # AgentRuntime, prompts, providers
+│       │   └── providers/        # HermesProvider, OllamaProvider, CommandCodeProvider
+│       ├── confirmation/         # ConfirmationService, single-use token logic
+│       ├── contracts/            # Zod contracts & type definitions
+│       ├── diagnostics/          # DiagnosticService, sanitization boundary
+│       ├── google/               # GWS CLI wrapper, normalizers, tools
+│       ├── hermes/               # HermesClient, config, error hierarchy
+│       ├── memory/               # SQLite memory store, policy, secret rejection
+│       ├── obsidian/             # Vault containment, path resolution, tools
+│       ├── shell/                # State machine & shell reducer
+│       ├── skills/               # Skill registry, loader, selector
+│       ├── tools/                # Application ToolRegistry & definitions
+│       ├── verification/         # Deterministic verification strategies
+│       └── voice/                # Whisper & Kokoro audio client wrappers
+└── tests/                        # Comprehensive test suite (422 tests)
+```
 
+---
 
+## Security & Privacy Commitments
+
+1. **Local-First & Offline Privacy**: All microphone audio is transcribed locally via Whisper, processed in memory, and immediately cleared. No recordings or voice transcripts are transmitted to external clouds.
+2. **Credential & Secret Protection**: Persistent memory automatically scans and rejects API keys, passwords, and private certificates. Diagnostics redact all credentials, absolute paths, and system commands.
+3. **No Unconfirmed Writes**: Autonomously modifying files, creating Google Docs, or drafting emails without explicit human approval is strictly prevented by architectural design.
+4. **No Arbitrary Shell Execution**: The application interacts with external integrations exclusively via explicit argument arrays with `shell: false`. Arbitrary model-directed bash/terminal commands are completely disabled.
+5. **Truthful Telemetry**: The UI never fabricates success. If an integration or service is unavailable, it honestly displays its real operational status.
+
+---
+
+## License
+
+Private repository. All rights reserved.
