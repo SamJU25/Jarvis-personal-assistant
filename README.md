@@ -97,25 +97,25 @@ The system enforces strict boundaries between product experience, agent reasonin
 
 JARVIS is built under a rigorous, 25-phase evolutionary engineering roadmap (v11 specification). Each phase enforces strict boundaries, zero architectural drift, comprehensive automated tests, and live hardware verification before proceeding.
 
-### Completed Phases (Phases 1–3)
+### Completed Phases (Phases 1–8)
 
 | Phase | Milestone | Status | Key Deliverables & Verified Behavior |
 |---|---|---|---|
 | **Phase 01** | **Clean Responsive Shell & Foundation** | **COMPLETED** | Removed all legacy Phase 1 sample/mock UI content; unified `JarvisShell` state machine; responsive desktop/mobile layouts; core animated visualizer; command bar and context rail seams. |
 | **Phase 02** | **Hermes Provider Foundation** | **COMPLETED** | Direct server-side integration with Nous Hermes Agent API (v0.21.3); `HermesClient` with Bearer auth; health probes (`/health`, `/health/detailed`); capability discovery (`/v1/capabilities`); session continuity tracking. |
 | **Phase 03** | **Pinned Tool Security Boundary & Registry** | **COMPLETED** | 17 typed `JarvisTool` specifications with Zod schemas; strict separation between read tools and write tools; 60s TTL single-use human confirmation tokens; application-owned deterministic verification strategies; verified that dangerous Hermes toolsets (terminal, code execution, unrestricted fs) remain pinned and disabled. |
+| **Phase 04** | **Hermes Core + Obsidian + Real-Time UI/Event Foundation** | **COMPLETED** | Hermes became the authoritative agent core owning the reasoning loop and multi-step tool calls via `/v1/runs`. Implemented server-side SSE event bus and reactive UI state. |
+| **Phase 05** | **Hermes + FreeLLMAPI + Functional Settings** | **COMPLETED** | Connected Hermes to FreeLLMAPI gateway for automatic upstream model routing (`model=auto`). Implemented functional settings UI backed by real backend snapshots (`GET /api/settings/snapshot`) and SSE (`GET /api/settings/events`) with write-only key management. |
+| **Phase 06** | **Capability Registry + Policy + Trace + Idempotency** | **COMPLETED** | Consolidated all tools into a unified Capability Registry with explicit execution policies, trace correlation, and idempotent run submission. |
+| **Phase 07** | **Intent + Alias Registry** | **COMPLETED** | High-speed deterministic accelerator and safety-sensitive intent router for common command shortcuts without invoking redundant LLM reasoning. |
+| **Phase 08** | **Specialist Agent Orchestration** | **COMPLETED** | Hermes child agent delegation via `delegate_task` (toolset `delegation`). 5 canonical specialist roles (`research`, `coding`, `productivity`, `memory`, `communications`). `DelegationPolicy` evaluating direct vs delegation. SSE event tracking (`subagent.start`/`subagent.complete`). Specialist tree card synthesis, 11-stage Debug Shell pipeline, and Settings Shell specialist registry. |
 
 ---
 
-### In Progress / Upcoming Phases (Phases 4–25 Tasks)
+### In Progress / Upcoming Phases (Phases 9–25)
 
 | Phase | Milestone | Objective & Scope |
 |---|---|---|
-| **Phase 04** | **Hermes Core + Obsidian + Real-Time UI/Event Foundation** | **COMPLETED** • Hermes became the authoritative agent core owning the reasoning loop and multi-step tool calls via `/v1/runs`. Implemented server-side SSE event bus and reactive UI state. |
-| **Phase 05** | **Hermes + FreeLLMAPI + Functional Settings** | **COMPLETED** • Connected Hermes to FreeLLMAPI gateway for automatic upstream model routing (`model=auto`). Implemented functional settings UI backed by real backend snapshots. |
-| **Phase 06** | **Capability Registry + Policy + Trace + Idempotency** | **COMPLETED** • Consolidated all tools into a unified Capability Registry with explicit execution policies and trace correlation. |
-| **Phase 07** | **Intent + Alias Registry** | **COMPLETED** • High-speed deterministic accelerator and safety-sensitive intent router for common command shortcuts without invoking redundant LLM reasoning. |
-| **Phase 08** | **Specialist Agent Orchestration** | **COMPLETED** • Hermes child agent delegation via `delegate_task` (toolset `delegation`). 5 canonical specialist roles (`research`, `coding`, `productivity`, `memory`, `communications`). `DelegationPolicy` evaluating direct vs delegation. SSE event tracking (`subagent.start`/`subagent.complete`). Specialist tree card synthesis, 11-stage Debug Shell pipeline, and Settings Shell specialist registry. |
 | **Phase 09** | **Google Workspace Consolidation** | **ACTIVE NEXT** • Compare JARVIS GWS capabilities with Hermes-native Google Workspace, build parity matrix, migrate where Hermes is sufficient, remove redundant code after live verification. |
 | **Phase 10** | **Web Research + Provenance** | Grounded web search tools with source citation extraction, snippet provenance, and strict external content isolation. |
 | **Phase 11** | **Advanced Obsidian Memory Retrieval** | Semantic memory search, memory graph navigation, bi-directional link traversal, and associative recall directly inside the Obsidian vault. |
