@@ -99,6 +99,19 @@ export function buildConfirmationDetails(
     };
   }
 
+  if (toolId === "write_document") {
+    const docPath = typeof parameters.path === "string" ? parameters.path : "document.txt";
+    const title = typeof parameters.title === "string" ? parameters.title : path.basename(docPath);
+    const content = typeof parameters.content === "string" ? parameters.content : "";
+    return {
+      actionCategory: "document",
+      title: "WRITE DOCUMENT",
+      target: docPath,
+      summary: `Write document "${title}" to ${docPath}`,
+      preview: content.slice(0, 500),
+    };
+  }
+
   return {
     actionCategory: "other",
     title: `WRITE ACTION: ${toolId}`,

@@ -5,6 +5,7 @@ import { registerObsidianTools } from "@/lib/obsidian/tools";
 import { registerGoogleTools } from "@/lib/google/tools";
 import { registerMemoryTools } from "@/lib/memory/tools";
 import { registerLearningTools } from "@/lib/learning/tools";
+import { registerDocumentTools } from "@/lib/documents/tools";
 
 export const DEMO_DATASET = [
   {
@@ -201,5 +202,6 @@ export function createDefaultToolRegistry(): ToolRegistry {
   registerGoogleTools(registry);
   registerMemoryTools(registry);
   registerLearningTools(registry);
+  registerDocumentTools(registry);
   return registry;
 }

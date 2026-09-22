@@ -14,7 +14,7 @@ JARVIS is a local-first personal AI operating assistant. `JARVIS_MASTER_PROMPT.m
 
 ## Current milestone
 
-**PHASE 12 — OBSIDIAN SKILLS + CONTROLLED LEARNING** is implemented and verified (Updated Prompts phases 04–12 and legacy Phases 1–12 preserved and reused).
+**PHASE 13 — FILE + DOCUMENT INTELLIGENCE** is implemented and verified (Updated Prompts phases 04–13 and legacy Phases 1–12 preserved and reused).
 
 The app includes:
 - Phase 1: Responsive shell, state-driven animated core, sample activity and semantic results, settings shell, and debug shell.
@@ -34,7 +34,8 @@ The app includes:
 - Phase 14 (Updated Prompts Phase 09): Google Workspace Consolidation (`docs/PHASE9-GOOGLE-PARITY.md`). Inventoried Hermes vs JARVIS Google capabilities; proved installed Hermes exposes no safer local Google toolset; preserved all 7 GWS tools under JARVIS application ownership; guarded via `tests/google/parity.test.ts`.
 - Phase 15 (Updated Prompts Phase 10): Web Research + Provenance (`docs/PHASE10-WEB-RESEARCH-PROVENANCE.md`, `src/lib/research/provenance.ts`). Governs provenance around Hermes's native `web` toolset; enforces URL scheme trust (`http:`/`https:`), external text sanitization, deduplication, and max 20 source bounds; merges sources into `StructuredResult.sources`.
 - Phase 16 (Updated Prompts Phase 11): Advanced Obsidian Memory Retrieval (`docs/PHASE11-OBSIDIAN-MEMORY-RETRIEVAL.md`, `src/lib/obsidian/memory-index.ts`). Derived in-memory index with mtime change detection over canonical vault Markdown (`AI/Memory/`); keyword-first scored retrieval with signal trace; annotated source paths in context and diagnostics.
-- Phase 17 (Updated Prompts Phase 12): Obsidian Skills + Controlled Learning (`docs/PHASE12-CONTROLLED-LEARNING.md`, `src/lib/learning/`). Human-gated skill improvement via `propose_skill_improvement`; deterministic diff generation in confirmation preview; 5-evidence `skill_verification` strategy; canonical vault skills in `AI/Skills/<name>/SKILL.md` with versioning and history rollback. Future milestones beyond Phase 12 (Updated Prompts) are NOT implemented.
+- Phase 17 (Updated Prompts Phase 12): Obsidian Skills + Controlled Learning (`docs/PHASE12-CONTROLLED-LEARNING.md`, `src/lib/learning/`). Human-gated skill improvement via `propose_skill_improvement`; deterministic diff generation in confirmation preview; 5-evidence `skill_verification` strategy; canonical vault skills in `AI/Skills/<name>/SKILL.md` with versioning and history rollback.
+- Phase 18 (Updated Prompts Phase 13): File + Document Intelligence (`docs/PHASE13-FILE-DOCUMENT-INTELLIGENCE.md`, `src/lib/documents/`). Governed file and document capabilities across explicit allowed roots (`documents`, `vault`), path containment and traversal protection (`resolveAllowedPath`), text bounding and sanitization, binary and media metadata extraction (never dumping raw binary into context), read/write classification (`list_documents`, `read_document`, `write_document`), human confirmation preview, and 5-evidence deterministic `document_verification` strategy. Future milestones beyond Phase 13 (Updated Prompts) are NOT implemented.
 
 ## Commands
 
@@ -85,7 +86,7 @@ Never fabricate tool calls, integration health, verification, or successful acti
 
 Do not add Docker, Redis, PostgreSQL, Kubernetes, n8n, queues, cloud infrastructure, unnecessary MCP systems, databases, or a Python backend without a demonstrated requirement.
 
-Phase 12 (Updated Prompts) — Obsidian Skills + Controlled Learning is implemented and verified. Legacy Phases 1 through 12 and Updated Prompts Phases 04–11 remain preserved and active. Future milestones beyond Phase 12 (Updated Prompts) are NOT implemented. No external telemetry services, cloud dashboards, persistent execution databases, distributed tracing, email sending, calendar deletion, or browser automation are implemented. All write actions require explicit user confirmation before execution, must pass application verification before reporting completion, and diagnostics remain strictly read-only.
+Phase 13 (Updated Prompts) — File + Document Intelligence is implemented and verified. Legacy Phases 1 through 12 and Updated Prompts Phases 04–12 remain preserved and active. Future milestones beyond Phase 13 (Updated Prompts) are NOT implemented. No external telemetry services, cloud dashboards, persistent execution databases, distributed tracing, email sending, calendar deletion, or browser automation are implemented. All write actions require explicit user confirmation before execution, must pass application verification before reporting completion, and diagnostics remain strictly read-only.
 
 ### Phase 2, 3, 4, 5, 6, 7, 7.5, 8, 9, 10, 11, 12 & 13 boundaries
 

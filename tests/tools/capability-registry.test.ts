@@ -5,11 +5,11 @@ import { z } from "zod";
 import type { JarvisTool } from "@/lib/contracts/tool";
 
 describe("Phase 06: Capability Registry & Declarative Metadata", () => {
-  it("all 18 registered tools declare capability metadata", () => {
+  it("all 21 registered tools declare capability metadata", () => {
     const registry = createDefaultToolRegistry();
     const tools = registry.list();
 
-    expect(tools.length).toBe(18);
+    expect(tools.length).toBe(21);
 
     for (const tool of tools) {
       expect(tool.id).toBeTruthy();
@@ -37,6 +37,7 @@ describe("Phase 06: Capability Registry & Declarative Metadata", () => {
     expect(registry.isConfirmationRequired("create_note")).toBe(true);
     expect(registry.isConfirmationRequired("create_google_doc")).toBe(true);
     expect(registry.isConfirmationRequired("draft_email")).toBe(true);
+    expect(registry.isConfirmationRequired("write_document")).toBe(true);
 
     // Read and safe tools do not require confirmation
     expect(registry.isConfirmationRequired("get_current_time")).toBe(false);
@@ -46,6 +47,8 @@ describe("Phase 06: Capability Registry & Declarative Metadata", () => {
     expect(registry.isConfirmationRequired("search_gmail")).toBe(false);
     expect(registry.isConfirmationRequired("search_memory")).toBe(false);
     expect(registry.isConfirmationRequired("store_memory")).toBe(false);
+    expect(registry.isConfirmationRequired("list_documents")).toBe(false);
+    expect(registry.isConfirmationRequired("read_document")).toBe(false);
   });
 
   it("maps declared verification strategies correctly", () => {
@@ -54,6 +57,7 @@ describe("Phase 06: Capability Registry & Declarative Metadata", () => {
     expect(registry.getVerificationStrategy("create_note")).toBe("note_verification");
     expect(registry.getVerificationStrategy("create_google_doc")).toBe("doc_verification");
     expect(registry.getVerificationStrategy("draft_email")).toBe("email_verification");
+    expect(registry.getVerificationStrategy("write_document")).toBe("document_verification");
     expect(registry.getVerificationStrategy("get_current_time")).toBe("read_verification");
     expect(registry.getVerificationStrategy("search_vault")).toBe("read_verification");
   });

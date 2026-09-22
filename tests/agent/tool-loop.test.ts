@@ -115,8 +115,8 @@ describe("Agent ↔ Tool Loop (Phase 3)", () => {
 
     expect(requestsReceived.length).toBe(2);
 
-    // Turn 1 had available tools metadata (3 demo + 3 obsidian + 7 google + 4 memory + 1 learning = 18)
-    expect(requestsReceived[0].availableTools.length).toBe(18);
+    // Turn 1 had available tools metadata (3 demo + 3 obsidian + 7 google + 4 memory + 1 learning + 3 document = 21)
+    expect(requestsReceived[0].availableTools.length).toBe(21);
     expect(requestsReceived[0].availableTools.map((t) => t.id)).toContain("get_current_time");
 
     // Turn 2 had tool result injected in conversation

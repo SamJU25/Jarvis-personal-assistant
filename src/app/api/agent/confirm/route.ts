@@ -289,6 +289,8 @@ export async function POST(request: NextRequest) {
             ? "Google Doc"
             : authorizedConfirmation.toolId === "propose_skill_improvement"
             ? "skill update"
+            : authorizedConfirmation.toolId === "write_document"
+            ? "document"
             : "email draft";
         const failureSpeech = `I couldn't verify that the ${actionName} was created. ${failureReason}`;
 
@@ -412,6 +414,25 @@ export async function POST(request: NextRequest) {
             location: out.relativePath,
           });
         }
+      } else if (authorizedConfirmation.toolId === "write_document") {
+        const docPath = out.path || params.path || "document";
+        const docTitle = params.title || (typeof docPath === "string" ? docPath.split("/").pop() || "Document" : "Document");
+        speech = `Created and verified document "${docTitle}" at ${docPath}.`;
+        cards.push({
+          type: "document",
+          id: `doc-${authorizedConfirmation.id}`,
+          label: "Document",
+          title: docTitle,
+          summary: `Verified document written to ${docPath} (${out.sizeBytes ?? 0} bytes).`,
+          format: typeof docPath === "string" && docPath.includes(".") ? docPath.split(".").pop() || "text" : "text",
+          modifiedAt: out.writtenAt || new Date().toISOString(),
+        });
+        sources.push({
+          id: `src-${authorizedConfirmation.id}`,
+          title: docTitle,
+          kind: "document",
+          location: docPath,
+        });
       }
 
       const finalStructuredResult: StructuredResult = {
