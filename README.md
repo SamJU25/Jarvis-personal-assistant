@@ -97,58 +97,63 @@ The system enforces strict boundaries between product experience, agent reasonin
 
 ---
 
-## 25-Phase Master Roadmap & Status
+## Architecture History: Built From Scratch & Evolutionary Upgrades
 
-JARVIS is built under a rigorous, 25-phase evolutionary engineering roadmap (v11 specification). Each phase enforces strict boundaries, zero architectural drift, comprehensive automated tests, and live hardware verification before proceeding.
-
-### Completed Phases (Phases 1–13)
-
-| Phase | Milestone | Status | Key Deliverables & Verified Behavior |
-|---|---|---|---|
-| **Phase 01** | **Clean Responsive Shell & Foundation** | **COMPLETED** | Removed all legacy Phase 1 sample/mock UI content; unified `JarvisShell` state machine; responsive desktop/mobile layouts; core animated visualizer; command bar and context rail seams. |
-| **Phase 02** | **Hermes Provider Foundation** | **COMPLETED** | Direct server-side integration with Nous Hermes Agent API (v0.21.3); `HermesClient` with Bearer auth; health probes (`/health`, `/health/detailed`); capability discovery (`/v1/capabilities`); session continuity tracking. |
-| **Phase 03** | **Pinned Tool Security Boundary & Registry** | **COMPLETED** | 17 typed `JarvisTool` specifications with Zod schemas; strict separation between read tools and write tools; 60s TTL single-use human confirmation tokens; application-owned deterministic verification strategies; verified that dangerous Hermes toolsets remain pinned and disabled. |
-| **Phase 04** | **Hermes Core + Obsidian + Real-Time UI/Event Foundation** | **COMPLETED** | Hermes became the authoritative agent core owning the reasoning loop and multi-step tool calls via `/v1/runs`. Implemented server-side SSE event bus and reactive UI state. |
-| **Phase 05** | **Hermes + FreeLLMAPI + Functional Settings** | **COMPLETED** | Connected Hermes to FreeLLMAPI gateway for automatic upstream model routing (`model=auto`). Implemented functional settings UI backed by real backend snapshots (`GET /api/settings/snapshot`) and SSE (`GET /api/settings/events`) with write-only key management. |
-| **Phase 06** | **Capability Registry + Policy + Trace + Idempotency** | **COMPLETED** | Consolidated all tools into a unified Capability Registry with explicit execution policies, trace correlation, and idempotent run submission. |
-| **Phase 07** | **Intent + Alias Registry** | **COMPLETED** | High-speed deterministic accelerator and safety-sensitive intent router for common command shortcuts without invoking redundant LLM reasoning. |
-| **Phase 08** | **Specialist Agent Orchestration** | **COMPLETED** | Hermes child agent delegation via `delegate_task` (toolset `delegation`). Established specialist definitions, delegation policy, SSE tracking (`subagent.start`/`subagent.complete`), and tree card synthesis. |
-| **Phase 09** | **Google Workspace Consolidation** | **COMPLETED** | Completed exhaustive parity matrix between JARVIS and Hermes Google capabilities; proved installed Hermes exposes no safer local Google toolset; preserved and guarded all 7 application-owned GWS tools (`search_gmail`, `read_gmail`, `get_calendar_events`, `search_drive`, `read_drive_file`, `create_google_doc`, `draft_email`). |
-| **Phase 10** | **Web Research + Provenance** | **COMPLETED** | Governed external web provenance around Hermes's native `web` toolset. Strict URL scheme trust (`http:`/`https:`), external text sanitization, deduplication, and max 20 source bounds integrated into `StructuredResult.sources`. |
-| **Phase 11** | **Advanced Obsidian Memory Retrieval** | **COMPLETED** | Derived in-memory index with mtime change detection over canonical vault Markdown notes (`AI/Memory/`). Scored retrieval with signal tracing and annotated source paths in context and diagnostics. |
-| **Phase 12** | **Obsidian Skills + Controlled Learning** | **COMPLETED** | Human-gated skill improvement via `propose_skill_improvement`. Deterministic unified diff previews, 5-evidence `skill_verification` strategy, and canonical vault skill lifecycle in `AI/Skills/<name>/SKILL.md`. |
-| **Phase 13** | **File + Document Intelligence** | **COMPLETED** | Governed file and document capabilities across explicitly allowed roots (`documents`, `vault`). Strict path containment blocking directory traversal and symlink escapes (`resolveAllowedPath`). Safe binary/media metadata extraction without raw byte dumping into context. Added `list_documents`, `read_document`, and human-confirmed `write_document` (total: 21 registered tools) backed by deterministic 5-evidence `document_verification`. |
+JARVIS was engineered across two foundational eras:
+1. **The Ground-Up Construction (Phases 1–12)**: How JARVIS was designed, architected, and built from an empty repository into a fully functioning, local-first operating assistant.
+2. **The Modern Subagent & Intelligence Era (Updated Prompts Phases 01–25)**: How JARVIS migrated to the Nous Hermes multi-agent core, specialist child delegations, advanced memory retrieval, controlled learning, and file intelligence.
 
 ---
 
-### In Progress / Upcoming Phases (Phases 14–25)
+### Part 1: How JARVIS Was Built From Scratch (Foundational Phases 1–12)
 
-| Phase | Milestone | Objective & Scope |
+| Milestone | Foundation Built From Scratch | Architectural Deliverables & Boundaries |
 |---|---|---|
-| **Phase 14** | **Voice Experience v2 + Low-Latency Streaming** | **ACTIVE NEXT** • Real-time speech-to-text streaming, sentence chunking with concurrent TTS overlap, focus-aware Space hold-to-talk (PTT), and sub-500ms time-to-first-audio. |
-| **Phase 15** | **Scheduler + Proactive Assistant** | In-memory cron/timer scheduling engine, morning briefings, calendar reminders, and proactive background task notifications. |
-| **Phase 16** | **Multimodal Vision** | Local multimodal image analysis, desktop screenshot inspection, and visual reasoning without cloud dependencies. |
-| **Phase 17** | **Browser Automation + Media Playback** | Safe, bounded browser automation actions and YouTube playback control through dedicated, isolated browser sessions. |
-| **Phase 18** | **Basic App + Communication Actions** | Desktop application launching, window focus control, system shortcuts, and local messaging primitives. |
-| **Phase 19** | **Windows Computer Control & Sandbox** | Governed, sandboxed Windows system interaction with strict permission checks and rollback safeguards. |
-| **Phase 20** | **Remote Channels (Telegram First)** | Telegram bot and remote messaging channel integration reusing the exact same unified JARVIS/Hermes runtime core. |
-| **Phase 21** | **Undo / Recovery / Idempotency Expansion** | Comprehensive undo system for safe reversible operations, vault snapshots, and transactional action recovery. |
-| **Phase 22** | **Mark-LIV-Inspired Cinematic Experience Layer** | Cinematic audiovisual animations, dynamic state visualizers, responsive audio reactive waveforms, and ambient HUD elements. |
-| **Phase 23** | **Plugin / Extension Lifecycle Manager** | Declarative plugin management system for installing, enabling, disabling, and isolating third-party capabilities safely. |
-| **Phase 24** | **JARVIS Control Center + Live Settings** | Full live control center with real-time health grid, capability toggles, memory visualizer, and live telemetry inspector. |
-| **Phase 25** | **Final Preflight / Security / Performance / Regression** | Complete system security audit, OWASP review, latency profiling, stress testing, and final release hardening. |
-| **Phase 14** | **Voice Experience v2 + Low-Latency Streaming** | Real-time speech-to-text streaming, sentence chunking with concurrent TTS overlap, focus-aware Space hold-to-talk (PTT), and sub-500ms time-to-first-audio. |
-| **Phase 15** | **Scheduler + Proactive Assistant** | In-memory cron/timer scheduling engine, morning briefings, calendar reminders, and proactive background task notifications. |
-| **Phase 16** | **Multimodal Vision** | Local multimodal image analysis, desktop screenshot inspection, and visual reasoning without cloud dependencies. |
-| **Phase 17** | **Browser Automation + Media Playback** | Safe, bounded browser automation actions and YouTube playback control through dedicated, isolated browser sessions. |
-| **Phase 18** | **Basic App + Communication Actions** | Desktop application launching, window focus control, system shortcuts, and local messaging primitives. |
-| **Phase 19** | **Windows Computer Control & Sandbox** | Governed, sandboxed Windows system interaction with strict permission checks and rollback safeguards. |
-| **Phase 20** | **Remote Channels (Telegram First)** | Telegram bot and remote messaging channel integration reusing the exact same unified JARVIS/Hermes runtime core. |
-| **Phase 21** | **Undo / Recovery / Idempotency Expansion** | Comprehensive undo system for safe reversible operations, vault snapshots, and transactional action recovery. |
-| **Phase 22** | **Mark-LIV-Inspired Cinematic Experience Layer** | Cinematic audiovisual animations, dynamic state visualizers, responsive audio reactive waveforms, and ambient HUD elements. |
-| **Phase 23** | **Plugin / Extension Lifecycle Manager** | Declarative plugin management system for installing, enabling, disabling, and isolating third-party capabilities safely. |
-| **Phase 24** | **JARVIS Control Center + Live Settings** | Full live control center with real-time health grid, capability toggles, memory visualizer, and live telemetry inspector. |
-| **Phase 25** | **Final Preflight / Security / Performance / Regression** | Complete system security audit, OWASP review, latency profiling, stress testing, and final release hardening. |
+| **Phase 1** | **Cinematic Shell & State Machine** | Built the Next.js App Router shell with Tailwind CSS, Framer Motion, and a unified `JarvisShell` reducer. Created the CenterStage animated visualizer, live context rail, command bar, and sample activity stream. |
+| **Phase 2** | **Provider Boundary & Headless Execution** | Designed the server-side provider boundary connecting JARVIS to Command Code headless execution with bounded role-aware conversations and NDJSON streaming. |
+| **Phase 3** | **Generic Tool Registry & Capability Boundary** | Created the application-owned `ToolRegistry`, typed `JarvisTool` contracts with Zod validation, safe demo tools (`get_current_time`, `search_demo_data`), and turn-bounded tool loops. |
+| **Phase 4** | **Obsidian Vault Integration** | Implemented server-only vault access (`search_vault`, `read_note`, `create_note`) with strict canonical path containment, read-only guarantees, and symlink traversal protection. |
+| **Phase 5** | **Runtime Skill & Process Engine** | Created `SkillRegistry`, dynamic skill loader, and 5 foundational workflows (`morning-briefing`, `meeting-prep`, `capture-note`, `research`, `loose-ends`). |
+| **Phase 6** | **Safe Google Workspace Integration** | Integrated server-side GWS CLI wrapper with safe process execution (`shell: false`), read tools (`search_gmail`, `get_calendar_events`, `search_drive`), and untrusted external content sanitization. |
+| **Phase 7** | **Persistent Local Memory (SQLite)** | Built durable server-side memory using Node.js native `node:sqlite`, 4 memory tools (`search_memory`, `store_memory`, etc.), bounded retrieval, and secret credential rejection. |
+| **Phase 7.5**| **Dual Reasoning Architecture (Local Ollama)** | Added local Ollama integration (`qwen3.5:4b`), runtime model discovery via `/api/tags`, JSON tool adapter, and seamless provider fallback without cloud dependencies. |
+| **Phase 8** | **Fully Local Voice Subsystem** | Built zero-cloud local voice pipeline using offline `whisper.cpp` (STT) and neural `Kokoro-82M` (TTS) with ephemeral RAM-only audio and real-time barge-in. |
+| **Phase 9** | **Human Confirmation Gate for Writes** | Established application-owned confirmation tracking with single-use cryptographic tokens (60s TTL) and drafts-only email creation (`draft_email`). Model cannot authorize writes. |
+| **Phase 10**| **Deterministic Formal Verification** | Enforced that tool execution is NOT task completion. Created deterministic on-disk verification strategies (`note_verification`, `doc_verification`) that empirically verify file sizes, checksums, and containment. Model self-claims ("verified: true") are strictly rejected. |
+| **Phase 11**| **Observability & Diagnostic Engine** | Expanded to an 11-stage telemetry pipeline, server-side `DiagnosticService` ring buffer, nanosecond latency timings, and full Debug Shell (`/debug`). |
+| **Phase 12**| **Reliability & Multi-Turn Polish** | Added deterministic task fast-paths (<10ms for unambiguous queries), multi-turn card normalization (`formatAssistantTurn`), and non-blocking asynchronous audio synthesis. |
+
+---
+
+### Part 2: The Modern Evolutionary Upgrades (Updated Prompts Phases 01–25)
+
+| Phase | Milestone | Status | Key Deliverables & Verified Behavior |
+|---|---|---|---|
+| **Phase 01** | **Clean Shell & Boundary Separation** | **COMPLETED** | Cleaned legacy mock UI; established unified reactive shell state machine and responsive desktop/mobile layouts. |
+| **Phase 02** | **Nous Hermes Core Integration** | **COMPLETED** | Connected server-side runtime directly to Nous Hermes Agent v0.21.3 API via Bearer auth, health probes, and session continuity. |
+| **Phase 03** | **Pinned Dangerous Toolsets** | **COMPLETED** | Pinned dangerous toolsets (`terminal`, `code_execution`, unrestricted fs); enforced 17 typed application-owned tools. |
+| **Phase 04** | **Hermes Core Reasoning Loop** | **COMPLETED** | Hermes became authoritative multi-step agent core owning the reasoning loop and SSE event stream via `/v1/runs`. |
+| **Phase 05** | **FreeLLMAPI & Functional Settings** | **COMPLETED** | Connected FreeLLMAPI gateway for intelligent upstream routing (`model=auto`) and functional key management with write-only inputs. |
+| **Phase 06** | **Capability Registry & Trace Correlation** | **COMPLETED** | Unified tools into Capability Registry with idempotent execution tracking and correlation IDs. |
+| **Phase 07** | **Intent & Alias Registry** | **COMPLETED** | High-speed regex accelerator and safety-sensitive intent router bypassing redundant LLM reasoning. |
+| **Phase 08** | **Specialist Agent Orchestration** | **COMPLETED** | Implemented Hermes child delegation via `delegate_task` (`delegation` toolset). Established 11 domain specialists, child permission containment, and specialist tree card synthesis. |
+| **Phase 09** | **Google Workspace Consolidation** | **COMPLETED** | Exhaustive parity check between JARVIS and Hermes Google capabilities; preserved all 7 application-owned GWS tools under strict application control. |
+| **Phase 10** | **Web Research + Grounded Provenance** | **COMPLETED** | Governed provenance around Hermes's native `web` toolset; URL scheme verification, text sanitization, and deduplicated source citations. |
+| **Phase 11** | **Advanced Obsidian Memory Retrieval** | **COMPLETED** | Scored retrieval index over canonical Markdown notes (`AI/Memory/`) with mtime change detection and signal tracing. |
+| **Phase 12** | **Obsidian Skills + Controlled Learning** | **COMPLETED** | Human-gated skill improvement via `propose_skill_improvement`, deterministic unified diff previews, and vault skill versioning (`AI/Skills/`). |
+| **Phase 13** | **File + Document Intelligence** | **COMPLETED** | Governed file operations across explicit allowed roots (`documents`, `vault`). Traversal-safe containment, safe binary metadata extraction, 21 registered tools (`list_documents`, `read_document`, `write_document`), and 5-evidence deterministic `document_verification`. |
+| **Phase 14** | **Voice Experience v2 + Low-Latency Streaming** | **ACTIVE NEXT** | Real-time speech-to-text streaming, sentence chunking with concurrent TTS overlap, focus-aware Space hold-to-talk (PTT), and sub-500ms time-to-first-audio. |
+| **Phase 15** | **Scheduler + Proactive Assistant** | UPCOMING | In-memory cron/timer scheduling engine, morning briefings, calendar reminders, and proactive background task notifications. |
+| **Phase 16** | **Multimodal Vision** | UPCOMING | Local multimodal image analysis, desktop screenshot inspection, and visual reasoning without cloud dependencies. |
+| **Phase 17** | **Browser Automation + Media Playback** | UPCOMING | Safe, bounded browser automation actions via sandboxed subagent and YouTube playback control through dedicated, isolated browser sessions. |
+| **Phase 18** | **Basic App + Communication Actions** | UPCOMING | Desktop application launching, window focus control, system shortcuts, and local messaging primitives. |
+| **Phase 19** | **Windows Computer Control & Sandbox** | UPCOMING | Governed, sandboxed Windows system interaction with strict permission checks and rollback safeguards. |
+| **Phase 20** | **Remote Channels (Telegram First)** | UPCOMING | Telegram bot and remote messaging channel integration reusing the exact same unified JARVIS/Hermes runtime core. |
+| **Phase 21** | **Undo / Recovery / Idempotency Expansion** | UPCOMING | Comprehensive undo system for safe reversible operations, vault snapshots, and transactional action recovery. |
+| **Phase 22** | **Mark-LIV-Inspired Cinematic Layer** | UPCOMING | Cinematic audiovisual animations, dynamic state visualizers, responsive audio reactive waveforms, and ambient HUD elements. |
+| **Phase 23** | **Plugin / Extension Lifecycle Manager** | UPCOMING | Declarative plugin management system for installing, enabling, disabling, and isolating third-party capabilities safely. |
+| **Phase 24** | **JARVIS Control Center + Live Settings** | UPCOMING | Full live control center with real-time health grid, capability toggles, memory visualizer, and live telemetry inspector. |
+| **Phase 25** | **Final Preflight / Security / Performance** | UPCOMING | Complete system security audit, OWASP review, latency profiling, stress testing, and final release hardening. |
 
 ---
 
