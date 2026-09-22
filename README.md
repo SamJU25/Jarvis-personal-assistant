@@ -5,7 +5,7 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16.3.5%20Turbopack-black.svg)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.2.8-blue.svg)](https://react.dev/)
 [![Node](https://img.shields.io/badge/Node.js-24.19.0-green.svg)](https://nodejs.org/)
-[![Prompt Pack](https://img.shields.io/badge/prompt%20pack-v12.2%20Hermes--First-blueviolet.svg)](Updated%20Prompts/JARVIS_Hermes_Antigravity_Prompt_Pack_v12)
+[![Prompt Pack](https://img.shields.io/badge/prompt%20pack-v12.5%20Hermes--First-blueviolet.svg)](Updated%20Prompts/JARVIS_Hermes_Antigravity_Prompt_Pack_v12)
 [![Local Voice](https://img.shields.io/badge/voice-Whisper%20%2B%20Kokoro%20(Local)-orange.svg)](https://github.com/SamJU25/Jarvis-personal-assistant)
 [![Hermes Agent](https://img.shields.io/badge/agent-Nous%20Hermes%200.21.3-purple.svg)](https://github.com/NousResearch/hermes-agent)
 
@@ -151,7 +151,7 @@ JARVIS was engineered across two foundational eras:
 
 ---
 
-### Part 2: The Modern Evolutionary Upgrades & Prompt Pack v12.2 Roadmap
+### Part 2: The Modern Evolutionary Upgrades & Prompt Pack v12.5 Roadmap
 
 The modern evolutionary upgrades transitioned JARVIS to the Nous Hermes reasoning core, specialist child delegations, advanced memory retrieval, controlled learning, and file intelligence:
 
@@ -175,29 +175,29 @@ The modern evolutionary upgrades transitioned JARVIS to the Nous Hermes reasonin
 
 ---
 
-#### B. Active Roadmap: Prompt Pack v12.2 (Phases 14A–23)
+#### B. Active Roadmap: Prompt Pack v12.5 (Phases 14A–23)
 
-In **Prompt Pack v12.2**, the roadmap was restructured around a strict **Hermes-First Consolidation Model**: rather than building duplicate engines in JARVIS, capabilities native to the installed Hermes runtime are audited, verified, migrated, and retired from duplicate production paths.
+In **Prompt Pack v12.5**, the roadmap was restructured around a strict **Hermes-First Consolidation Model**: rather than building duplicate engines in JARVIS, capabilities native to the installed Hermes runtime are audited, verified, migrated, and retired from duplicate production paths.
 
 | Phase | Milestone | Status | Key Deliverables & Architectural Focus |
 |---|---|---|---|
-| **Phase 14A** | **Hermes Bootstrap & JARVIS Binding** | **ACTIVE NEXT** | Discover and bind to installed Hermes runtime; establish server-to-server boundary via `hermes serve` (headless JSON-RPC / WebSocket gateway, port `9119`); manage deterministic start/health/stop lifecycle without duplicate processes. |
-| **Phase 14** | **Hermes Capability Audit & Ownership Reset** | QUEUED | Formulate comprehensive capability parity matrix (inference, local models, voice, memory, skills, delegation, Google Workspace); identify native vs duplicate paths; contract updates before code removal. |
-| **Phase 15** | **Hermes-Native Runtime Consolidation** | QUEUED | Migrate execution to native Hermes capabilities verified in Phase 14; retire duplicate JARVIS production inference/voice/skills paths while preserving safety policies and UI state contracts. |
-| **Phase 16** | **Unified JARVIS Control Plane** | QUEUED | Single control surface over Hermes configuration/status; Zod snapshot (`/api/settings/snapshot`) + SSE stream (`/api/settings/events`); live server-side external state synchronization. |
-| **Phase 17** | **JARVIS UI v2: Memory Galaxy + Voice Waveform** | QUEUED | Replace standalone reactor with **Memory Galaxy**, compact **Holo JARVIS Core** at the center, and audio-reactive **Voice Wave**; enforce strict 3-column no-overlap layout. |
-| **Phase 18** | **Memory Galaxy Data & Interaction Layer** | QUEUED | Normalized graph query bridging `Jarvis Memory` Obsidian vault notes with Hermes agent runtime memory facts; interactive node inspection. |
-| **Phase 19** | **Hermes Agents & Skills Workspace** | QUEUED | Expose real Hermes Bot Mode profiles, delegated specialists, and skills in JARVIS UI without creating parallel child process managers. |
-| **Phase 20** | **Hermes Channels & Proactive Tasks Workspace** | QUEUED | Unified control surface for Hermes-supported channels (Telegram, etc.) and cron/scheduled tasks; safe credential isolation. |
-| **Phase 21** | **Plugins, Capabilities, Security & Diagnostics** | QUEUED | Real Hermes plugin/provider discovery; normalized capability manifest; security permission auditing and execution trace monitors. |
-| **Phase 22** | **UX Polish, Accessibility, Responsive Behavior & Performance** | QUEUED | Layout container queries, mobile sheet drawers, accessible list fallbacks for the Memory Galaxy, reduced-motion support, and latency optimization. |
-| **Phase 23** | **Final Hermes/JARVIS Preflight & Regression** | QUEUED | End-to-end invariant validation: prove JARVIS is a unified control plane over Hermes with zero unverified duplicate production engines. |
+| **Phase 14A** | **Hermes Runtime Alignment + Binding Verification** | **ACTIVE NEXT** | Establish factual current Hermes/JARVIS runtime boundary; verify existing `127.0.0.1:8642` endpoint and inspect against `hermes serve` (port `9119`); prove live health, session continuity, and safe error handling without creating duplicate runtimes; document actual interface in `docs/HERMES-RUNTIME.md`. |
+| **Phase 14** | **Hermes Capability Ownership Audit** | QUEUED | Formulate comprehensive capability parity matrix (inference, local models, voice, memory, skills, delegation, Google Workspace); identify native vs duplicate paths; contract updates before code removal. |
+| **Phase 15** | **Duplicate Retirement & Hermes-Native Consolidation** | QUEUED | Migrate execution to native Hermes capabilities verified in Phase 14; explicitly retire duplicate JARVIS production inference/voice/skills paths while preserving safety policies and UI state contracts. Duplicate retirement is the explicit outcome of this phase. |
+| **Phase 16** | **Unified JARVIS Control Plane + Live Hermes Synchronization** | QUEUED | Single control surface over Hermes configuration/status; Zod snapshot (`/api/settings/snapshot`) + SSE stream (`/api/settings/events`); live server-side external state synchronization; dynamic reconciliation of external Hermes changes without page reload. |
+| **Phase 17** | **Large Holo Core + Memory Galaxy + Voice Wave + Rail Refinement** | QUEUED | Replace decorative reactor with large functional **Holo Workspace**: **Holo JARVIS Core** (functional hub with Memory/Skills/Agents/Activity domains), surrounding **Memory Galaxy** (source-backed graph), audio-reactive **Voice Wave**, renamed **System Rail** (left, ~220–240px) and **Live Mission Rail** (right, ~300–320px); enforce strict 3-column no-overlap layout with center visual dominance. |
+| **Phase 18** | **Canonical Memory/Obsidian Workspace** | QUEUED | Normalized graph query bridging `Jarvis Memory` Obsidian vault notes with Hermes agent runtime memory facts; interactive node inspection; strict vault ownership rules enforced. |
+| **Phase 19** | **Hermes Agents/Bots + Skills Workspace** | QUEUED | Expose real Hermes Bot Mode profiles, delegated specialists, and skills in JARVIS UI without creating parallel child process managers. |
+| **Phase 20** | **Hermes Channels + Cron/Proactive Workspace** | QUEUED | Unified control surface for Hermes-supported channels (Telegram, etc.) and cron/scheduled tasks; safe credential isolation. |
+| **Phase 21** | **Plugins/Capabilities/Security/Diagnostics** | QUEUED | Real Hermes plugin/provider discovery; normalized capability manifest; security permission auditing and execution trace monitors. |
+| **Phase 22** | **UX/Accessibility/Responsive/Performance** | QUEUED | Layout container queries, mobile sheet drawers, accessible list fallbacks for the Memory Galaxy, reduced-motion support, `prefers-reduced-motion` respect, and latency optimization. |
+| **Phase 23** | **Final Preflight & Regression** | QUEUED | End-to-end invariant validation: prove JARVIS is a unified control plane over Hermes with zero unverified duplicate production engines; no-duplicate invariants and live external-change tests. |
 
 ---
 
-### In-Depth: Prompt Instruction Evolution (Pack v11 vs. Pack v12.2)
+### In-Depth: Prompt Instruction Evolution (Pack v11 → v12.2 → v12.5)
 
-The prompt instruction pack located under [`Updated Prompts/`](Updated%20Prompts/) underwent a fundamental architectural evolution from **v11** to **v12.2**:
+The prompt instruction pack located under [`Updated Prompts/`](Updated%20Prompts/) underwent a fundamental architectural evolution from **v11** through **v12.2** to **v12.5**:
 
 ```
 Prompt Pack v11 (Legacy 25-Phase Roadmap)
@@ -206,7 +206,7 @@ Prompt Pack v11 (Legacy 25-Phase Roadmap)
   - Standalone FreeLLMAPI gateway managed directly by JARVIS
   - Decorative CenterStage Mark-LIV reactor
 
-                        ▼ Architectural Tightening
+                        ▼ Architectural Tightening (v12.2)
 
 Prompt Pack v12.2 (Hermes-First Architecture & UI v2)
   - Starting point reset: Starts from Phase 13 complete (archived P01–P13)
@@ -216,33 +216,57 @@ Prompt Pack v12.2 (Hermes-First Architecture & UI v2)
   - Dynamic UI Synchronization (Rule 7A): Real-time reconciliation of external Hermes changes without page reload
   - Cinematic UI v2: Memory Galaxy + Holo JARVIS Core + Audio-Reactive Voice Wave (strict 3-column layout)
   - Streamlined 10-phase execution plan (Phases 14A through 23)
+
+                        ▼ v12.5 Corrections & Refinements
+
+Prompt Pack v12.5 (Verified Binding & Large Holo Workspace)
+  - Phase 14A reframed as runtime alignment/binding verification, not unconditional installation
+  - Explicit port ambiguity handling: 127.0.0.1:8642 (repo) vs 9119 (Hermes docs) — inspect, don't assume
+  - Truth hierarchy: live code/runtime > installed Hermes > contracts/tests > docs > old roadmap
+  - Duplicate retirement made an explicit Phase 15 outcome
+  - Strict `Jarvis Memory` vault-root ownership rules (AI/Memory and AI/Skills are subfolders, not vaults)
+  - Large Holo Workspace specification: functional holographic hub, not decorative reactor
+  - Holo Core functional domains: Memory, Skills, Agents/Bots, Activity
+  - Rails renamed: System Rail (left, ~220–240px) and Live Mission Rail (right, ~300–320px)
+  - Real-state Voice Wave rules (waveform must never imply audio when none is active)
+  - Dynamic external-Hermes-change synchronization requirements
+  - Added VERIFIED_REPO_STATE.md, VERIFIED_REFERENCES.md, and completion/continue templates
 ```
 
-#### Key Instruction Changes:
+#### Key Instruction Changes (v12.2 → v12.5):
 1. **Starting Point Reset (Phase 13 Complete)**:
    - **v11** carried prompts starting from initial scaffolding (`PHASE_01.md` through `PHASE_25.md`).
-   - **v12.2** recognizes that Phases 01–13 are already implemented, tested (612 passing tests), and verified in this codebase. All completed legacy phases were archived, and execution picks up directly at `PHASE_14A.md`.
+   - **v12.5** recognizes that Phases 01–13 are already implemented, tested (612 passing tests), and verified in this codebase. All completed legacy phases were archived, and execution picks up directly at `PHASE_14A.md`.
 2. **Strict Non-Duplication Principle**:
    - **v11** planned bespoke JARVIS implementations for voice pipelines v2, scheduling daemons, browser automation, and computer control.
-   - **v12.2** mandates that if the installed Hermes build natively supports a capability (voice, model routing, skills, Bot delegation, cron, channels, plugins), JARVIS must **not duplicate it**. Instead, JARVIS acts as the product shell, policy governor, confirmation gate, and verification authority over Hermes's execution engine.
-3. **Headless `hermes serve` Integration Boundary**:
-   - Official Hermes CLI documents `hermes serve` as the headless backend service exposing JSON-RPC and WebSocket endpoints (default loopback port `9119`).
-   - v12.2 establishes that JARVIS connects server-to-server with `hermes serve`, strictly prohibiting iframing or HTML-scraping `hermes dashboard`.
+   - **v12.5** mandates that if the installed Hermes build natively supports a capability (voice, model routing, skills, Bot delegation, cron, channels, plugins), JARVIS must **not duplicate it**. Instead, JARVIS acts as the product shell, policy governor, confirmation gate, and verification authority over Hermes's execution engine.
+3. **Runtime Alignment, Not Blind Installation (v12.5 correction)**:
+   - Phase 14A was reframed from "Hermes Bootstrap" to **"Runtime Alignment + Binding Verification"**. The repository already documents Hermes integration, so Phase 14A first proves what actually exists before changing anything.
+   - The JARVIS repository documents a Hermes API server at `127.0.0.1:8642`, while official Hermes CLI docs document `hermes serve` on port `9119`. v12.5 deliberately does NOT assert that one should replace the other without inspection.
+   - **Truth hierarchy** when sources disagree: (1) Actual local code and live runtime behavior → (2) Installed Hermes version and supported interfaces → (3) Current JARVIS contracts/tests → (4) Current documentation → (5) Old roadmap prose.
 4. **Canonical Vault Rule (`Jarvis Memory`)**:
    - The user's actual directory **`Jarvis Memory`** is enforced as the immutable canonical Obsidian vault root (`OBSIDIAN_VAULT_PATH`).
-   - Coding agents are forbidden from inventing a second vault or treating `AI/Memory` as the vault root (it is strictly an internal subfolder).
-   - Memory Galaxy is explicitly defined as a **derived visualization layer**, never a separate database.
-5. **Live External State Synchronization (Rule 7A)**:
+   - `AI/Memory/` is a subfolder inside the vault, not another vault. `AI/Skills/` is a subfolder inside the vault, not another vault.
+   - Coding agents are forbidden from inventing a second vault, creating a second canonical SQLite memory store for the same durable facts, or making Hermes `HERMES_HOME` the JARVIS Obsidian vault.
+   - Memory Galaxy is explicitly defined as a **derived visualization/index metadata layer**, never a separate database.
+5. **Live External State Synchronization**:
    - If a user changes a model, voice setting, skill, or bot profile outside JARVIS (e.g. via Hermes CLI or Hermes dashboard), JARVIS automatically observes and reconciles the change without requiring a full browser page refresh.
-   - Preferred reconciliation order: Hermes WebSocket stream $\rightarrow$ status readback $\rightarrow$ bounded server polling with backoff.
-6. **UI v2 Visual Direction ([`UI_GUIDE.md`](Updated%20Prompts/JARVIS_Hermes_Antigravity_Prompt_Pack_v12/UI_GUIDE.md))**:
-   - The old large decorative reactor is replaced with:
-     - **Memory Galaxy**: Interactive visualization of relationships between `Jarvis Memory` Markdown notes and Hermes runtime facts.
-     - **Holo JARVIS Core**: Compact holographic core embedded at the Galaxy center, reflecting 9 real runtime states (`idle`, `listening`, `thinking`, `working`, `speaking`, `approval`, `completed`, `error`, `disconnected`).
-     - **Voice Wave**: Persistent center visualizer driven by actual microphone input amplitude and neural TTS speech analysis.
-     - **Strict Layout Invariant ("NO OVERLAP")**: Three-column bounded grid (`Left Rail | Center Stage | Right Rail`); galaxy and waveform must never overflow into side rails.
+   - Preferred reconciliation order: Hermes WebSocket stream → status readback → bounded server polling with backoff.
+   - Every normalized snapshot must have a timestamp/version/source where practical to distinguish stale from fresh data.
+6. **Large Holo Workspace Visual Direction ([`UI_GUIDE.md`](Updated%20Prompts/JARVIS_Hermes_Antigravity_Prompt_Pack_v12/UI_GUIDE.md))**:
+   - The old large decorative reactor is replaced with a **large functional holographic workspace**:
+     - **Holo JARVIS Core**: Functional holographic hub (not just an animation) at the center, exposing entry points for Memory, Skills, Agents/Bots, and Activity, reflecting 9 real runtime states (`idle`, `listening`, `thinking`, `working`, `speaking`, `approval`, `completed`, `error`, `disconnected`).
+     - **Memory Galaxy**: Surrounding context visualization of real relationships between `Jarvis Memory` Markdown notes and Hermes runtime facts, with deterministic source-backed edges.
+     - **Voice Wave**: Real-state center visualizer — waveform must never imply audio activity when no audio is playing/being captured.
+     - **System Rail** (left, ~220–240px): Compact status, health, navigation. Not a duplicate dashboard.
+     - **Live Mission Rail** (right, ~300–320px): Activity, results, sources, agents, approvals.
+     - **Strict Layout Invariant ("NO OVERLAP")**: Three-column bounded grid; center wins the space budget; collapse rails before shrinking Holo.
 7. **`ANTIGRAVITY_MASTER_PROMPT.md`**:
-   - v12.2 adds [`ANTIGRAVITY_MASTER_PROMPT.md`](Updated%20Prompts/JARVIS_Hermes_Antigravity_Prompt_Pack_v12/ANTIGRAVITY_MASTER_PROMPT.md) as a single, comprehensive context prompt for autonomous IDE coding agents.
+   - v12.5 includes [`ANTIGRAVITY_MASTER_PROMPT.md`](Updated%20Prompts/JARVIS_Hermes_Antigravity_Prompt_Pack_v12/ANTIGRAVITY_MASTER_PROMPT.md) as a single, comprehensive context prompt for autonomous IDE coding agents.
+8. **Verified References & Repo State (v12.5 additions)**:
+   - [`VERIFIED_REPO_STATE.md`](Updated%20Prompts/JARVIS_Hermes_Antigravity_Prompt_Pack_v12/VERIFIED_REPO_STATE.md): Records what was actually visible in the public repository and current Hermes documentation when the pack was generated.
+   - [`VERIFIED_REFERENCES.md`](Updated%20Prompts/JARVIS_Hermes_Antigravity_Prompt_Pack_v12/VERIFIED_REFERENCES.md): Cites all verified JARVIS and Hermes official sources used by the pack.
+   - [`COMPLETION_REPORT_TEMPLATE.md`](Updated%20Prompts/JARVIS_Hermes_Antigravity_Prompt_Pack_v12/COMPLETION_REPORT_TEMPLATE.md) and [`CONTINUE_TEMPLATE.md`](Updated%20Prompts/JARVIS_Hermes_Antigravity_Prompt_Pack_v12/CONTINUE_TEMPLATE.md): Standardized templates for phase completion reporting and session continuation.
 
 ---
 
@@ -596,23 +620,23 @@ JARVIS features seamless local reasoning fallback via Ollama so your assistant r
 - Whisper STT Health: `http://127.0.0.1:8080/health`
 - Kokoro TTS Health: `http://127.0.0.1:8880/health`
 
-#### Hermes Runtime (`hermes serve` & API Server)
-For the official Hermes runtime boundary (Prompt Pack v12.2):
+#### Hermes Runtime (API Server)
+The JARVIS repository documents a Hermes API server at `127.0.0.1:8642`. Official Hermes CLI docs also describe `hermes serve` (headless JSON-RPC/WebSocket, default port `9119`) and `hermes dashboard`. Per the Prompt Pack v12.5 truth hierarchy, inspect the installed system before assuming either endpoint — Phase 14A resolves the actual runtime boundary.
+
 ```powershell
-# Headless JSON-RPC / WebSocket server (port 9119):
+# Current JARVIS-documented Hermes API server:
+cd ..\hermes-agent
+.\.venv\Scripts\activate
+python run_api_server_test.py
+
+# Or headless JSON-RPC / WebSocket server (if verified as the active interface):
 hermes serve
 
 # Optional administrative dashboard (for troubleshooting only):
 hermes dashboard
 ```
-Or for the legacy local API server test runner:
-```powershell
-cd ..\hermes-agent
-.\.venv\Scripts\activate
-python run_api_server_test.py
-```
 - Hermes API Health: `http://127.0.0.1:8642/health`
-- Hermes Headless Server: `ws://127.0.0.1:9119`
+- Hermes Headless Server (if active): `ws://127.0.0.1:9119`
 
 #### Launch JARVIS
 ```powershell
@@ -696,8 +720,8 @@ Contributions are warmly welcomed! Whether you are interested in expanding the s
 
 1. **Add New Obsidian Skills**: Create a new folder under `Jarvis Memory/AI/Skills/<your-skill-name>/` with a `SKILL.md` file featuring structured YAML frontmatter and step-by-step instructions.
 2. **Add or Enhance Specialist Subagents**: Register new domain personas in `src/lib/specialist/registry.ts` and equip them with focused tools and skillsets.
-3. **Hermes Bootstrap & Capability Consolidation (Phases 14A–15)**: Help test the headless `hermes serve` boundary and verify native capability parity.
-4. **Cinematic UI v2 & Memory Galaxy (Phase 17)**: Improve the Memory Galaxy visualization, compact Holo JARVIS Core, audio-reactive Voice Wave, and Framer Motion transitions within the strict three-column layout.
+3. **Hermes Runtime Alignment & Capability Consolidation (Phases 14A–15)**: Help verify the existing Hermes runtime boundary, test native capability parity, and retire duplicate production paths.
+4. **Large Holo Workspace & Memory Galaxy (Phase 17)**: Build the large functional Holo Core with Memory/Skills/Agents/Activity domains, Memory Galaxy visualization, audio-reactive Voice Wave, System Rail, Live Mission Rail, and Framer Motion transitions within the strict three-column layout.
 5. **Quality & Test Coverage**: Help maintain our strict quality standards by writing tests under `tests/` and ensuring `npm test`, `npm run lint`, and `npm run typecheck` pass cleanly.
 
 ### Core Inspirations & Direct Foundations
