@@ -8,7 +8,19 @@
 [![Local Voice](https://img.shields.io/badge/voice-Whisper%20%2B%20Kokoro%20(Local)-orange.svg)](https://github.com/SamJU25/Jarvis-personal-assistant)
 [![Hermes Agent](https://img.shields.io/badge/agent-Nous%20Hermes%200.21.3-purple.svg)](https://github.com/NousResearch/hermes-agent)
 
-**JARVIS** is a local-first, privacy-respecting personal AI operating assistant and live control center. Designed as an ambient, cinematic command surface rather than a generic chat window, JARVIS combines agentic reasoning (Nous Hermes 0.21.3), a pinned tool security boundary, human confirmation gates for writes, application-owned deterministic verification, local voice (Whisper + Kokoro), bi-directional integration with personal data stores (Obsidian and Google Workspace), and a modular subagent architecture with 11 specialized child agents.
+<p align="center">
+  <img src="public/showcase.png" alt="JARVIS Cinematic Assistant Shell & Neural Core" width="100%" />
+</p>
+
+<p align="center">
+  <em>The live JARVIS Assistant Shell — showing the ambient Mark-LIV neural core, real-time system vitals, offline model indicators, and reactive state machine.</em>
+</p>
+
+> *"Most AI assistants are glorified web chatbots living on someone else's server. They listen when they shouldn't, forget who you are between sessions, and demand subscription fees to summarize an email.*
+>
+> *JARVIS was built on a different principle: your assistant should live completely on your hardware, respect your privacy by default, store long-term memories in human-readable Markdown notes in your Obsidian vault, speak with zero-cloud neural voice, and feel like Tony Stark's command center."*
+
+**JARVIS** is an open-source, local-first personal operating assistant and live control center. Built with the **Nous Hermes 0.21.3** reasoning core, **Local Whisper STT**, **Kokoro-82M TTS**, and **Next.js 16 with Turbopack**, JARVIS replaces generic chat windows with a cinematic command HUD, pinned tool security boundaries, explicit human confirmation for write actions, and 11 specialized child subagents.
 
 ---
 
@@ -94,6 +106,19 @@ The system enforces strict boundaries between product experience, agent reasonin
 │   - Non-blocking local Kokoro TTS audio synthesis                           │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## Anatomy of the Cinematic Shell
+
+The JARVIS interface shown above is engineered for ambient situational awareness rather than an endless scrolling message log. Every visual pixel corresponds to verified system state:
+
+| Surface Area | Architectural Function | Real-Time Behaviors & Honest Safety Guarantees |
+|---|---|---|
+| **Left Rail**<br>*(System Vitals)* | **Temporal Anchor & Health Telemetry** | Displays real-time digital clock, date, active reasoning provider status (`Authenticated`), active local model (`qwen3.5:4b`), and honest integration badges (`Obsidian: Available`, `Memory: Available`, `Voice: Unavailable`, `Google: Not configured`). No hardcoded "connected" illusions — if an integration is down, JARVIS honestly reports it. |
+| **CenterStage**<br>*(The Neural Core)* | **Framer Motion Mark-LIV HUD** | Multi-ring rotating concentric HUD with radial reticle ticks and arc radar pulses. A reactive finite state machine dynamically animates the core across 7 distinct cognitive states: `Idle`, `Listening`, `Thinking`, `Executing`, `Speaking`, `Confirmation`, and `Error`. |
+| **Command Bar**<br>*(Omni-Input Surface)* | **Unified Intent Seam** | Accepts natural-language text or local push-to-talk voice. High-speed regex accelerator bypasses LLM overhead (<10ms) for unambiguous queries like time checks. The status badge truthfully displays `Local voice & text ready · Offline capable`. |
+| **Right Rail**<br>*(Intelligence Area)* | **Semantic Result & Telemetry Feed** | Three-tab streaming workspace: **Activity** (real-time subagent SSE chips and execution logs), **Results** (typed semantic cards: Email Drafts, Meeting Prep, Notes, Documents, and the Specialist Team Tree), and **Sources** (deduplicated provenance citations). |
 
 ---
 
