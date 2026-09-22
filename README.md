@@ -20,7 +20,7 @@
 >
 > *JARVIS was built on a different principle: your assistant should live completely on your hardware, respect your privacy by default, store long-term memories in human-readable Markdown notes in your Obsidian vault, speak with zero-cloud neural voice, and feel like Tony Stark's command center."*
 
-**JARVIS** is an open-source, local-first personal operating assistant and live control center. Built with the **Nous Hermes 0.21.3** reasoning core, **Local Whisper STT**, **Kokoro-82M TTS**, and **Next.js 16 with Turbopack**, JARVIS replaces generic chat windows with a cinematic command HUD, pinned tool security boundaries, explicit human confirmation for write actions, and 11 specialized child subagents.
+**JARVIS** is an open-source, local-first personal operating assistant and live control center. The master prompt architecture and cinematic UI concept were inspired by **Shab Noor | AI For Operators** ([watch on YouTube](https://youtu.be/s3WkutktHsw?si=j3zfBaRLci9tmWWe)). Built on the **Nous Hermes 0.21.3** reasoning core, **Local Whisper STT**, **Kokoro-82M TTS**, and **Next.js 16 with Turbopack**, JARVIS replaces generic chat windows with an ambient command HUD, pinned tool security boundaries, explicit human confirmation for write actions, and 11 specialized child subagents.
 
 ---
 
@@ -626,27 +626,21 @@ Contributions are warmly welcomed! Whether you are interested in expanding the s
 4. **Cinematic HUD & Animations (Phase 22)**: Improve the CenterStage Mark-LIV reactive visualizer, audio reactive waveforms, and Framer Motion transitions.
 5. **Quality & Test Coverage**: Help maintain our strict quality standards by writing tests under `tests/` and ensuring `npm test`, `npm run lint`, and `npm run typecheck` pass cleanly.
 
-### Open-Source Inspirations & Attribution
+### Core Inspirations & Direct Foundations
 
-JARVIS stands on the shoulders of remarkable projects, communities, and creators:
+JARVIS was conceived and built upon the direct architectural and technical foundations of these creators and projects:
 
-| Project / Creator | Core Inspiration & Technological Foundation |
+| Project / Creator | Exact Role & Foundation in JARVIS |
 |---|---|
-| **Nous Research ([Hermes Agent](https://github.com/NousResearch))** | The state-of-the-art autonomous reasoning engine, multi-step tool execution loop, and native `delegate_task` child subagent architecture. |
-| **Obsidian ([Obsidian.md](https://obsidian.md))** | The local-first, plain-text Markdown philosophy empowering human-readable, portable, and permanent personal knowledge without cloud lock-in. |
-| **Georgi Gerganov ([whisper.cpp](https://github.com/ggerganov/whisper.cpp))** | Blazing-fast, ultra-efficient C/C++ offline speech recognition running locally with zero cloud dependencies or privacy leaks. |
-| **Hexgrad ([Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M))** | The remarkably natural, lightweight 82M-parameter neural text-to-speech model bringing warm, fluid voice synthesis to personal computing. |
-| **Browser-Use ([browser-use/browser-use](https://github.com/browser-use/browser-use))** | Visionary browser automation architecture inspiring JARVIS's upcoming sandboxed web subagents in Phase 17. |
-| **Obra ([@obra](https://github.com/obra))** | Software engineering superpowers, test-driven development (TDD) discipline, systematic debugging, and evidence-first verification. |
-| **Matt Pocock ([Total TypeScript](https://www.totaltypescript.com))** | Advanced TypeScript patterns, deep type safety, and zero-compromise type ergonomics. |
-| **Addy Osmani ([Web Quality](https://addyosmani.com))** | Web performance optimization, Core Web Vitals, and accessibility quality gates. |
-| **Shawnchee ([Caveman Mode](https://github.com/Shawnchee))** | Ultra-dense, token-saving, zero-fluff communication protocols for lightning-fast scanning. |
-| **Blader ([Humanizer](https://github.com/blader))** | Natural writing cadences that eliminate robotic tropes and repetitive AI cadence. |
-| **NextLevelBuilder ([UI/UX Pro Max](https://github.com/nextlevelbuilder))** | World-class visual hierarchy, HSL tailored color systems, glassmorphic styling, and fluid motion design. |
-| **Coleam00 ([Excalidraw Skills](https://github.com/coleam00))** | Programmatic diagramming and visual architecture schematics using clean JSON and visual layout principles. |
-| **Remotion ([Remotion.dev](https://www.remotion.dev))** | Programmatic React-driven motion graphics, audio sync, and canvas rendering pipelines. |
-| **Vercel Engineering & Next.js Team** | The Next.js 16+ App Router, Server Components architecture, and Turbopack bundler. |
-| **Marvel Cinematic Universe (MCU)** | Tony Stark's J.A.R.V.I.S. (Just A Rather Very Intelligent System) — the timeless dream of an elegant, capable, loyal personal AI companion. |
+| **Shab Noor \| AI For Operators ([YouTube Video](https://youtu.be/s3WkutktHsw?si=j3zfBaRLci9tmWWe))** | **Original Master Prompt & UI Architecture Inspiration**: The core architectural vision for building a true local AI operating assistant rather than a chatbot — including the multi-pane cinematic layout (temporal anchor, CenterStage neural core, command bar, and semantic card workspace) and the foundational master prompt structure — was inspired by Shab Noor's landmark breakdown: *"GPT-6 Astra Finally Built the Ultimate JARVIS"*. |
+| **Nous Research ([Hermes Agent](https://github.com/NousResearch))** | **Primary Autonomous Reasoning Core**: The local server agent (`0.21.3`), native multi-step tool reasoning loops, structured sessions, and child agent delegation via `delegate_task`. |
+| **Obsidian ([Obsidian.md](https://obsidian.md))** | **Canonical Local-First Knowledge Vault**: The plain-text Markdown storage layer powering long-term memories (`AI/Memory/*.md`) and runtime procedural skills (`AI/Skills/*/SKILL.md`) with zero database lock-in. |
+| **Georgi Gerganov ([whisper.cpp](https://github.com/ggerganov/whisper.cpp))** | **Local Speech-to-Text Engine**: Ultra-fast offline speech recognition running purely in RAM without third-party cloud audio transmission. |
+| **Hexgrad ([Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M))** | **Local Neural Text-to-Speech Engine**: The 82M-parameter ONNX neural speech synthesizer delivering natural, local voice responses on consumer hardware. |
+| **Ollama ([Ollama.ai](https://ollama.com))** | **Local Open-Weights LLM Runtime**: The local inference fallback runner powering models like `qwen3.5:4b` with native JSON schema enforcement completely offline. |
+| **Google Workspace CLI (`gws`)** | **Safe Google Integration Engine**: The official CLI tool powering read and draft capabilities across Gmail, Google Drive, and Google Calendar under strict human confirmation gates. |
+| **Vercel & Next.js Team ([Next.js](https://nextjs.org))** | **Web Application & UI Framework**: The Next.js 16 App Router, React 19, Server Components, and Turbopack bundler powering the cinematic HUD shell. |
+| **Marvel Cinematic Universe (MCU)** | **Conceptual Inspiration**: Tony Stark's J.A.R.V.I.S. (Just A Rather Very Intelligent System) — the timeless dream of an elegant, capable, loyal personal computing companion. |
 
 ---
 
