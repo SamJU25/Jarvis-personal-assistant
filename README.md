@@ -4,7 +4,7 @@
 [![Quality Gates](https://img.shields.io/badge/quality%20gates-lint%20%7C%20types%20%7C%20build%20passing-brightgreen.svg)](https://github.com/SamJU25/Jarvis-personal-assistant)
 [![Next.js](https://img.shields.io/badge/Next.js-16.3.5%20Turbopack-black.svg)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.2.8-blue.svg)](https://react.dev/)
-[![Node](https://img.shields.io/badge/Node.js-24.19.0-green.svg)](https://nodejs.org/)
+[![Node](https://img.shields.io/badge/Node.js-24.21.0-green.svg)](https://nodejs.org/)
 [![Prompt Pack](https://img.shields.io/badge/prompt%20pack-v12.5%20Hermes--First-blueviolet.svg)](Updated%20Prompts/JARVIS_Hermes_Antigravity_Prompt_Pack_v12)
 [![Local Voice](https://img.shields.io/badge/voice-Whisper%20%2B%20Kokoro%20(Local)-orange.svg)](https://github.com/SamJU25/Jarvis-personal-assistant)
 [![Hermes Agent](https://img.shields.io/badge/agent-Nous%20Hermes%200.21.3-purple.svg)](https://github.com/NousResearch/hermes-agent)
@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <em>The live JARVIS Assistant Shell — showing the ambient Mark-LIV neural core, real-time system vitals, offline model indicators, and reactive state machine.</em>
+  <em>The live JARVIS Assistant Shell — showing the Holo JARVIS Core, real-time system vitals, offline model indicators, and reactive state machine. Transitioning to the large Holo Workspace with Memory Galaxy and Voice Wave in Phase 17.</em>
 </p>
 
 > *"Most AI assistants are glorified web chatbots living on someone else's server. They listen when they shouldn't, forget who you are between sessions, and demand subscription fees to summarize an email.*
@@ -33,8 +33,8 @@ The system enforces strict boundaries between product experience, agent reasonin
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                       JARVIS Channels & UI Surface                          │
 │     (Next.js App Router, Tailwind CSS, Framer Motion, SSE Event Client)     │
-│   - Cinematic CenterStage Core           - Command Bar (Text + PTT Voice)   │
-│   - Live Context Rail & Activity Stream  - Reactive Control Center Settings │
+│   - Holo Workspace & Core               - Command Bar (Text + PTT Voice)   │
+│   - System Rail & Live Mission Rail      - Reactive Control Center Settings │
 └──────────────────────────────────────┬──────────────────────────────────────┘
                                        │
                 User Request (Typed text or Local Voice STT)
@@ -84,7 +84,7 @@ The system enforces strict boundaries between product experience, agent reasonin
 │  - create_google_doc (Safe Google Workspace CLI) │                  │
 │  - draft_email (Gmail Draft Only via GWS CLI)    │                  │
 │  - write_document (Allowed Path Containment)     │                  │
-│  - propose_skill_improvement (Controlled Learning│                  │
+│  - propose_skill_improvement (Controlled Learning)│                  │
 └─────────────────────────┬────────────────────────┘                  │
                           │                                           │
                           └─────────────────────┬─────────────────────┘
@@ -116,10 +116,10 @@ The JARVIS interface shown above is engineered for ambient situational awareness
 
 | Surface Area | Architectural Function | Real-Time Behaviors & Honest Safety Guarantees |
 |---|---|---|
-| **Left Rail**<br>*(System Vitals)* | **Temporal Anchor & Health Telemetry** | Displays real-time digital clock, date, active reasoning provider status (`Authenticated`), active local model (`qwen3.5:4b`), and honest integration badges (`Obsidian: Available`, `Memory: Available`, `Voice: Unavailable`, `Google: Not configured`). No hardcoded "connected" illusions — if an integration is down, JARVIS honestly reports it. |
-| **CenterStage**<br>*(The Neural Core & Galaxy)* | **Mark-LIV HUD & Memory Galaxy** | Multi-ring rotating concentric HUD transitioning in UI v2 to the **Memory Galaxy** with a compact **Holo JARVIS Core** at its visual center. A reactive finite state machine dynamically animates across 9 distinct cognitive states: `Idle`, `Listening`, `Thinking`, `Working`, `Speaking`, `Approval`, `Completed`, `Error`, and `Disconnected`. Accompanied by a center-stage **Voice Wave** driven by real audio analysis. Governed by a strict 3-column layout invariant (no overlap over side rails). |
+| **System Rail**<br>*(Left — ~220–240px)* | **Temporal Anchor & Health Telemetry** | Displays real-time digital clock, date, active reasoning provider status (`Authenticated`), active local model (`qwen3.5:4b`), and honest integration badges (`Obsidian: Available`, `Memory: Available`, `Voice: Unavailable`, `Google: Not configured`). Compact, useful, not a duplicate dashboard. No hardcoded "connected" illusions — if an integration is down, JARVIS honestly reports it. |
+| **Holo Workspace**<br>*(Center — dominant)* | **Holo JARVIS Core + Memory Galaxy + Voice Wave** | Large functional holographic workspace containing the **Holo JARVIS Core** (functional hub with Memory/Skills/Agents/Activity domain entry points), surrounded by the **Memory Galaxy** (source-backed relationship graph), with the **Voice Wave** below. A reactive finite state machine dynamically animates across 9 distinct cognitive states: `Idle`, `Listening`, `Thinking`, `Working`, `Speaking`, `Approval`, `Completed`, `Error`, and `Disconnected`. Voice Wave reflects real audio capture/playback state. Governed by a strict 3-column no-overlap layout invariant — center wins the space budget. |
 | **Command Bar**<br>*(Omni-Input Surface)* | **Unified Intent Seam** | Accepts natural-language text or local push-to-talk voice. High-speed regex accelerator bypasses LLM overhead (<10ms) for unambiguous queries like time checks. The status badge truthfully displays `Local voice & text ready · Offline capable`. |
-| **Right Rail**<br>*(Intelligence Area)* | **Semantic Result & Telemetry Feed** | Three-tab streaming workspace: **Activity** (real-time subagent SSE chips and execution logs), **Results** (typed semantic cards: Email Drafts, Meeting Prep, Notes, Documents, and the Specialist Team Tree), and **Sources** (deduplicated provenance citations). |
+| **Live Mission Rail**<br>*(Right — ~300–320px)* | **Semantic Result & Telemetry Feed** | Streaming workspace answering "What is JARVIS doing now?": **Activity** (real-time subagent SSE chips and execution logs), **Results** (typed semantic cards: Email Drafts, Meeting Prep, Notes, Documents, and the Specialist Team Tree), **Sources** (deduplicated provenance citations), **Agents/Delegation** status, and **Approval** state. Collapsible when center needs room. |
 
 ---
 
@@ -127,7 +127,7 @@ The JARVIS interface shown above is engineered for ambient situational awareness
 
 JARVIS was engineered across two foundational eras:
 1. **The Ground-Up Construction (Phases 1–12)**: How JARVIS was designed, architected, and built from an empty repository into a fully functioning, local-first operating assistant.
-2. **The Modern Subagent & Intelligence Era (Phases 01–25)**: How JARVIS migrated to the Nous Hermes multi-agent core, specialist child delegations, advanced memory retrieval, controlled learning, and file intelligence.
+2. **The Modern Subagent & Intelligence Era (Phases 01–13 complete, then consolidated Phases 14A–23)**: How JARVIS migrated to the Nous Hermes multi-agent core, specialist child delegations, advanced memory retrieval, controlled learning, and file intelligence.
 
 ---
 
@@ -319,7 +319,7 @@ To eliminate prompt bloat and prevent context overload on the main orchestrator,
 
 ### 6. In-Depth: How Obsidian Stores Memory and Skills
 
-JARVIS avoids opaque, cloud-locked, or proprietary databases for your personal intelligence. Instead, your local Obsidian vault (`f:\Jarvis\Jarvis Memory`) serves as the **canonical, human-readable, single source of truth**. You can open Obsidian at any time, browse your memories, edit your skills in plain Markdown, or sync them with your mobile devices via Obsidian Sync or Git without any proprietary barriers.
+JARVIS avoids opaque, cloud-locked, or proprietary databases for your personal intelligence. Instead, your local Obsidian vault (`Jarvis Memory`) serves as the **canonical, human-readable, single source of truth**. The vault root is always the directory named `Jarvis Memory` — `AI/Memory/` and `AI/Skills/` are subfolders inside it, never separate vaults. You can open Obsidian at any time, browse your memories, edit your skills in plain Markdown, or sync them with your mobile devices via Obsidian Sync or Git without any proprietary barriers.
 
 ```
 F:\Jarvis\Jarvis Memory\
@@ -438,7 +438,7 @@ To prevent the main orchestrator from slowing down under heavy prompts, bloated 
 
 #### A. Orchestrator vs. Leaf Subagent Roles
 - **JARVIS Orchestrator**: The top-level conductor that interfaces with the user, evaluates intent, decides whether to execute directly or delegate, and synthesizes the final conversational response.
-- **Hermes Leaf Specialists**: Task-focused child agents spawned via Hermes's native `delegate_task` in the `delegation` toolset (`f:\hermes-agent\tools\delegate_tool.py`). Each specialist is assigned a scoped subtask, a designated role persona, and a subset of permitted tools.
+- **Hermes Leaf Specialists**: Task-focused child agents spawned via Hermes's native `delegate_task` in the `delegation` toolset. Each specialist is assigned a scoped subtask, a designated role persona, and a subset of permitted tools.
 
 #### B. The Load Question: "Can I Add As Many Subagents As I Want?"
 A common architectural concern is whether adding many subagents will create severe system lag or GPU overload:
@@ -481,7 +481,7 @@ JARVIS includes 11 specialized personas configured with optimal tools and system
 - A single-use cryptographic token (60-second TTL) is generated and rendered as a **Confirmation Card** in the browser. The subagent halts until the human explicitly clicks **Approve** or speaks approval.
 
 #### F. Real-Time Telemetry & Specialist Tree Card
-- As subagents execute in Python, SSE telemetry events (`subagent.start`, `subagent.complete`) stream to the browser in real time.
+- As subagents execute via the Hermes runtime, SSE telemetry events (`subagent.start`, `subagent.complete`) stream to the browser in real time.
 - The CenterStage UI displays live animated chips indicating which specialist is currently active.
 - Upon completion, JARVIS synthesizes a structured **Specialist Team Card** showing:
   - Each participating specialist's name and role icon.
@@ -567,7 +567,7 @@ JARVIS_OLLAMA_MODEL=qwen3.5:4b
 JARVIS_OLLAMA_KEEP_ALIVE=15m
 JARVIS_OLLAMA_THINK=false
 
-# Obsidian Vault Path (Point to any existing Obsidian vault or a dedicated folder)
+# Obsidian Vault Path (Must point to the canonical `Jarvis Memory` vault root)
 OBSIDIAN_VAULT_PATH=F:\Jarvis\Jarvis Memory
 
 # Google Workspace CLI
@@ -655,7 +655,11 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ```text
 f:\Jarvis\
-├── docs/                         # Architecture, roadmap, and alignment specifications
+├── docs/                         # Architecture, roadmap, security, and alignment specifications
+│   ├── ARCHITECTURE.md           # Full system architecture documentation
+│   ├── BEGINNER-GUIDE.md         # Beginner development guide
+│   ├── ROADMAP.md                # Development roadmap
+│   └── SECURITY.md               # Security model and threat analysis
 ├── public/                       # Static assets and icons
 ├── scripts/                      # Verification and test runners
 │   ├── verify-hermes-live.ts     # Live Hermes client and capabilities verification
@@ -666,33 +670,43 @@ f:\Jarvis\
 │   │   ├── api/agent/            # Agent runtime, streaming, confirmation, provider APIs
 │   │   ├── api/debug/            # Diagnostic telemetry API
 │   │   ├── api/memory/           # Memory inspection API
+│   │   ├── api/settings/         # Settings snapshot and event stream APIs
 │   │   ├── api/voice/            # STT transcription and TTS synthesis endpoints
 │   │   ├── debug/                # 11-stage visual pipeline debug shell
 │   │   ├── settings/             # System settings & provider configuration shell
 │   │   ├── layout.tsx            # Root HTML & layout
-│   │   └── page.tsx              # Cinematic Assistant Shell
+│   │   └── page.tsx              # Main JARVIS Assistant Shell
 │   ├── components/
 │   │   ├── activity/             # Timeline and live event feeds
 │   │   ├── cards/                # Semantic card renderers (Email, Meeting, Doc, Note)
 │   │   ├── confirmations/        # Confirmation preview card UI
 │   │   ├── debug/                # Diagnostic visualizers & stage monitors
-│   │   └── jarvis/               # CenterStage animated core, command bar, context rail
+│   │   ├── jarvis/               # Holo Core, command bar, context rail
+│   │   ├── settings/             # Settings shell UI components
+│   │   └── ui/                   # Shared UI primitives
 │   └── lib/
 │       ├── agent/                # Agent runtime, prompts, and provider implementations
 │       │   └── providers/        # HermesProvider, OllamaProvider, CommandCodeProvider
 │       ├── confirmation/         # ConfirmationService, single-use token lifecycle
 │       ├── contracts/            # Zod validation schemas & TypeScript contracts
 │       ├── diagnostics/          # Telemetry service and browser sanitization
+│       ├── documents/            # File/document intelligence, containment, verification
+│       ├── gateway/              # Agent gateway and request routing
 │       ├── google/               # GWS CLI wrapper, data normalizers, Google tools
 │       ├── hermes/               # HermesClient, config, endpoints, error classes
+│       ├── intent/               # Intent recognition, alias registry, fast-path resolver
+│       ├── learning/             # Controlled learning, skill improvement proposals
 │       ├── memory/               # Native SQLite store, secret filter, access policy
 │       ├── obsidian/             # Vault containment, path normalization, note tools
+│       ├── research/             # Web research provenance and source tracking
+│       ├── settings/             # Settings state management and snapshots
 │       ├── shell/                # State machine & shell reducer
 │       ├── skills/               # Skill registry, markdown loader, semantic selector
 │       ├── specialist/           # Specialist registry, delegation policy, permission containment
 │       ├── tools/                # Application ToolRegistry & 21 registered tools
 │       ├── verification/         # Application-owned deterministic verification engine
 │       └── voice/                # Local Whisper and Kokoro client interfaces
+├── Updated Prompts/              # Prompt Pack v12.5 instruction set
 └── tests/                        # Vitest test suite (100 test files, 612 tests)
 ```
 
