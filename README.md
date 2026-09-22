@@ -450,6 +450,8 @@ npx tsx scripts/verify-phase3-live.ts
 ### 1. Prerequisites
 - **Node.js**: `v24.19.0+`
 - **Python**: `3.10+` (for Hermes API Server and local Kokoro/Whisper voice runtime)
+- **Ollama**: Download from [ollama.com](https://ollama.com). Runs open-weights models offline on your GPU or CPU.
+- **Obsidian**: Download from [obsidian.md](https://obsidian.md) (Free for personal use). While JARVIS operates directly on Markdown files on disk, installing the Obsidian desktop app gives you the visual second-brain interface, interactive graph view, and seamless editing of memories and skills.
 - **Git**: For version control
 
 ### 2. Installation
@@ -477,8 +479,8 @@ JARVIS_OLLAMA_MODEL=qwen3.5:4b
 JARVIS_OLLAMA_KEEP_ALIVE=15m
 JARVIS_OLLAMA_THINK=false
 
-# Obsidian Vault Path
-OBSIDIAN_VAULT_PATH=F:\Your\Obsidian\Vault
+# Obsidian Vault Path (Point to any existing Obsidian vault or a dedicated folder)
+OBSIDIAN_VAULT_PATH=F:\Jarvis\Jarvis Memory
 
 # Google Workspace CLI
 JARVIS_GWS_EXECUTABLE=gws
@@ -492,7 +494,36 @@ JARVIS_KOKORO_VOICE=am_adam
 JARVIS_KOKORO_SPEED=1.0
 ```
 
-### 4. Running the Local Services
+### 4. Setting Up Your Obsidian Vault
+1. **Download & Install Obsidian**: Grab the desktop app from [obsidian.md](https://obsidian.md).
+2. **Open Your Vault**:
+   - Launch Obsidian and select **"Open folder as vault"**.
+   - Select your vault directory (e.g. `F:\Jarvis\Jarvis Memory` or your existing personal vault).
+3. **Configure in `.env.local`**:
+   - Ensure `OBSIDIAN_VAULT_PATH` points to that directory.
+4. **Live Synchronization**:
+   - JARVIS automatically initializes and maintains `AI/Memory/*.md` for durable memories and `AI/Skills/*/SKILL.md` for runtime skills.
+   - Any notes you write or edit in Obsidian are instantly accessible to JARVIS via `mtime` change detection (<2ms) without manual indexing.
+
+### 5. Setting Up Ollama & Downloading the Local Model
+JARVIS features seamless local reasoning fallback via Ollama so your assistant remains fully functional even when offline or without external API access:
+
+1. **Install Ollama**: Download and run the installer from [ollama.com](https://ollama.com).
+2. **Download the Recommended Model**:
+   ```powershell
+   ollama pull qwen3.5:4b
+   ```
+   > **Why `qwen3.5:4b`?** It provides exceptional instruction-following, adheres strictly to JSON tool schemas, requires less than 4GB of VRAM/RAM, and runs blazing fast on modern consumer hardware. You can also use other models such as `llama3.2:3b` or `qwen2.5-coder:7b`.
+3. **Verify Ollama is Running**:
+   - Ollama automatically runs in the system background (or run `ollama serve` in a terminal).
+   - Verify it responds at `http://localhost:11434`.
+4. **Configure in `.env.local`**:
+   ```env
+   JARVIS_OLLAMA_BASE_URL=http://localhost:11434
+   JARVIS_OLLAMA_MODEL=qwen3.5:4b
+   ```
+
+### 6. Running the Local Services
 
 #### Local Voice Subsystem (Whisper + Kokoro)
 ```powershell
