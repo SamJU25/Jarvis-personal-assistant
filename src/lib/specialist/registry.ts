@@ -128,7 +128,92 @@ export class SpecialistRegistry {
   findBestSpecialist(taskDescription: string): SpecialistDefinition | undefined {
     const normalized = taskDescription.toLowerCase();
 
-    // 1. Coding domain
+    // 1. Academic & Assignment domain
+    if (
+      normalized.includes("assignment") ||
+      normalized.includes("essay") ||
+      normalized.includes("thesis") ||
+      normalized.includes("dissertation") ||
+      normalized.includes("literature review") ||
+      normalized.includes("citation") ||
+      normalized.includes("bibtex") ||
+      normalized.includes("rubric") ||
+      normalized.includes("coursework") ||
+      normalized.includes("lab report")
+    ) {
+      return this.get("academic");
+    }
+
+    // 2. Marketing & Growth domain
+    if (
+      normalized.includes("marketing") ||
+      normalized.includes("growth") ||
+      normalized.includes("copywriting") ||
+      normalized.includes("product hunt") ||
+      normalized.includes("show hn") ||
+      normalized.includes("social media") ||
+      normalized.includes("launch strategy") ||
+      normalized.includes("seo") ||
+      normalized.includes("viral")
+    ) {
+      return this.get("marketing");
+    }
+
+    // 3. Quality, Testing & Debugging domain
+    if (
+      /\b(test|tests|testing|tdd|debug|debugging)\b/.test(normalized) ||
+      normalized.includes("vulnerability") ||
+      normalized.includes("security review") ||
+      normalized.includes("performance") ||
+      normalized.includes("web vitals") ||
+      normalized.includes("lighthouse") ||
+      normalized.includes("verification loop")
+    ) {
+      return this.get("quality");
+    }
+
+    // 4. Frontend & UI/UX domain
+    if (
+      normalized.includes("frontend") ||
+      /\b(ui|ux|css)\b/.test(normalized) ||
+      normalized.includes("tailwind") ||
+      normalized.includes("react") ||
+      normalized.includes("nextjs") ||
+      normalized.includes("component") ||
+      normalized.includes("remotion") ||
+      normalized.includes("landing page")
+    ) {
+      return this.get("frontend");
+    }
+
+    // 5. Backend & Systems domain
+    if (
+      normalized.includes("backend") ||
+      /\b(api|apis|auth)\b/.test(normalized) ||
+      normalized.includes("database") ||
+      normalized.includes("postgres") ||
+      normalized.includes("golang") ||
+      normalized.includes("kotlin") ||
+      normalized.includes("endpoint") ||
+      normalized.includes("route handler")
+    ) {
+      return this.get("backend");
+    }
+
+    // 6. Architecture & Planning domain
+    if (
+      normalized.includes("excalidraw") ||
+      normalized.includes("diagram") ||
+      normalized.includes("brainstorming") ||
+      normalized.includes("system design") ||
+      normalized.includes("graphify") ||
+      normalized.includes("deploy to vercel") ||
+      normalized.includes("trade-off")
+    ) {
+      return this.get("architecture");
+    }
+
+    // 7. General Coding domain
     if (
       normalized.includes("code") ||
       normalized.includes("architecture") ||
@@ -141,7 +226,7 @@ export class SpecialistRegistry {
       return this.get("coding");
     }
 
-    // 2. Memory / Knowledge domain
+    // 8. Memory / Knowledge domain
     if (
       normalized.includes("remember") ||
       normalized.includes("memory") ||
@@ -152,7 +237,7 @@ export class SpecialistRegistry {
       return this.get("memory");
     }
 
-    // 3. Communications domain
+    // 9. Communications domain
     if (
       normalized.includes("email") ||
       normalized.includes("draft") ||
@@ -163,7 +248,7 @@ export class SpecialistRegistry {
       return this.get("communications");
     }
 
-    // 4. Productivity domain
+    // 10. Productivity domain
     if (
       normalized.includes("calendar") ||
       normalized.includes("agenda") ||
@@ -175,7 +260,7 @@ export class SpecialistRegistry {
       return this.get("productivity");
     }
 
-    // 5. Research domain
+    // 11. Research domain
     if (
       normalized.includes("research") ||
       normalized.includes("investigate") ||

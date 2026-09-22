@@ -1,6 +1,6 @@
 # JARVIS — Personal AI Operating Assistant
 
-[![Tests](https://img.shields.io/badge/tests-524%20passed-brightgreen.svg)](https://github.com/SamJU25/Jarvis-personal-assistant)
+[![Tests](https://img.shields.io/badge/tests-612%20passed-brightgreen.svg)](https://github.com/SamJU25/Jarvis-personal-assistant)
 [![Quality Gates](https://img.shields.io/badge/quality%20gates-lint%20%7C%20types%20%7C%20build%20passing-brightgreen.svg)](https://github.com/SamJU25/Jarvis-personal-assistant)
 [![Next.js](https://img.shields.io/badge/Next.js-16.3.5%20Turbopack-black.svg)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.2.8-blue.svg)](https://react.dev/)
@@ -8,7 +8,7 @@
 [![Local Voice](https://img.shields.io/badge/voice-Whisper%20%2B%20Kokoro%20(Local)-orange.svg)](https://github.com/SamJU25/Jarvis-personal-assistant)
 [![Hermes Agent](https://img.shields.io/badge/agent-Nous%20Hermes%200.21.3-purple.svg)](https://github.com/NousResearch/hermes-agent)
 
-**JARVIS** is a local-first, privacy-respecting personal AI operating assistant and live control center. Designed as an ambient, cinematic command surface rather than a generic chat window, JARVIS combines agentic reasoning (Nous Hermes 0.21.3), a pinned tool security boundary, human confirmation gates for writes, application-owned deterministic verification, local voice (Whisper + Kokoro), and bi-directional integration with personal data stores (Obsidian and Google Workspace).
+**JARVIS** is a local-first, privacy-respecting personal AI operating assistant and live control center. Designed as an ambient, cinematic command surface rather than a generic chat window, JARVIS combines agentic reasoning (Nous Hermes 0.21.3), a pinned tool security boundary, human confirmation gates for writes, application-owned deterministic verification, local voice (Whisper + Kokoro), bi-directional integration with personal data stores (Obsidian and Google Workspace), and a modular subagent architecture with 11 specialized child agents.
 
 ---
 
@@ -38,14 +38,14 @@ The system enforces strict boundaries between product experience, agent reasonin
 │                             HERMES AGENT CORE                               │
 │              (Runs / Sessions / Reasoning / Skills / Delegation)            │
 │   - Native multi-step agent loop         - Pinned safe tool execution       │
-│   - Context management & summarization   - Specialist child delegations     │
+│   - Context management & summarization   - 11 Specialist child delegations  │
 └───────────────────────┬─────────────────────────────┬───────────────────────┘
                         │                             │
         Inference Path  ▼                             ▼  Capability Call
 ┌──────────────────────────────┐       ┌──────────────────────────────────────┐
 │       FreeLLMAPI Gateway     │       │    JARVIS Governed Capability &      │
 │  - model=auto routing        │       │           Policy Boundary            │
-│  - Unified client auth       │       │  - Application ToolRegistry          │
+│  - Unified client auth       │       │  - 21 Application-Owned Tools        │
 │  - Upstream provider balance │       │  - Strict Argument Coercion (Zod)    │
 │  (Local Ollama Fallback)     │       │  - Dangerous Toolset Pinning Check   │
 └──────────────────────────────┘       └──────────────────┬───────────────────┘
@@ -60,7 +60,8 @@ The system enforces strict boundaries between product experience, agent reasonin
 │  - Cryptographic single-use token generation     │   │  - Obsidian Read / Search    │
 │  - 60-second TTL replay attack rejection         │   │  - Gmail / Calendar / Drive  │
 │  - Explicit dual approval (UI Card or Voice)     │   │  - Obsidian Memory Retrieval │
-│  - Draft-only email creation (send forbidden)    │   │  - Demo Tools & System Time  │
+│  - Draft-only email creation (send forbidden)    │   │  - Governed Document Reading │
+│  - Governed write_document preview               │   │  - Demo Tools & System Time  │
 └─────────────────────────┬────────────────────────┘   └──────────────┬───────────────┘
                           │ Approved                                  │
                           ▼                                           │
@@ -69,6 +70,8 @@ The system enforces strict boundaries between product experience, agent reasonin
 │  - create_note (Obsidian Vault Containment)      │                  │
 │  - create_google_doc (Safe Google Workspace CLI) │                  │
 │  - draft_email (Gmail Draft Only via GWS CLI)    │                  │
+│  - write_document (Allowed Path Containment)     │                  │
+│  - propose_skill_improvement (Controlled Learning│                  │
 └─────────────────────────┬────────────────────────┘                  │
                           │                                           │
                           └─────────────────────┬─────────────────────┘
@@ -78,13 +81,14 @@ The system enforces strict boundaries between product experience, agent reasonin
 │                    Formal Verification Registry                             │
 │   - Application-owned empirical post-execution verification                 │
 │   - Deterministic disk containment, stat inspection, and ID validation      │
+│   - 5-evidence document verification (path, existence, size, SHA-256)       │
 │   - Model claims ("verified": true) strictly rejected as evidence           │
 └───────────────────────────────────────┬─────────────────────────────────────┘
                                         │
                                         ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                      Diagnostic & Observability Engine                      │
-│   - 11-stage lifecycle telemetry pipeline (Run -> ... -> Specialist -> ...)  │
+│   - 11-stage lifecycle telemetry pipeline (Run -> ... -> Specialist -> ...) │
 │   - Strict browser sanitization (redacting tokens, paths, audio, shell)     │
 │   - performance.now() stage timing & latency profiling                      │
 │   - Non-blocking local Kokoro TTS audio synthesis                           │
@@ -97,30 +101,42 @@ The system enforces strict boundaries between product experience, agent reasonin
 
 JARVIS is built under a rigorous, 25-phase evolutionary engineering roadmap (v11 specification). Each phase enforces strict boundaries, zero architectural drift, comprehensive automated tests, and live hardware verification before proceeding.
 
-### Completed Phases (Phases 1–8)
+### Completed Phases (Phases 1–13)
 
 | Phase | Milestone | Status | Key Deliverables & Verified Behavior |
 |---|---|---|---|
 | **Phase 01** | **Clean Responsive Shell & Foundation** | **COMPLETED** | Removed all legacy Phase 1 sample/mock UI content; unified `JarvisShell` state machine; responsive desktop/mobile layouts; core animated visualizer; command bar and context rail seams. |
 | **Phase 02** | **Hermes Provider Foundation** | **COMPLETED** | Direct server-side integration with Nous Hermes Agent API (v0.21.3); `HermesClient` with Bearer auth; health probes (`/health`, `/health/detailed`); capability discovery (`/v1/capabilities`); session continuity tracking. |
-| **Phase 03** | **Pinned Tool Security Boundary & Registry** | **COMPLETED** | 17 typed `JarvisTool` specifications with Zod schemas; strict separation between read tools and write tools; 60s TTL single-use human confirmation tokens; application-owned deterministic verification strategies; verified that dangerous Hermes toolsets (terminal, code execution, unrestricted fs) remain pinned and disabled. |
+| **Phase 03** | **Pinned Tool Security Boundary & Registry** | **COMPLETED** | 17 typed `JarvisTool` specifications with Zod schemas; strict separation between read tools and write tools; 60s TTL single-use human confirmation tokens; application-owned deterministic verification strategies; verified that dangerous Hermes toolsets remain pinned and disabled. |
 | **Phase 04** | **Hermes Core + Obsidian + Real-Time UI/Event Foundation** | **COMPLETED** | Hermes became the authoritative agent core owning the reasoning loop and multi-step tool calls via `/v1/runs`. Implemented server-side SSE event bus and reactive UI state. |
 | **Phase 05** | **Hermes + FreeLLMAPI + Functional Settings** | **COMPLETED** | Connected Hermes to FreeLLMAPI gateway for automatic upstream model routing (`model=auto`). Implemented functional settings UI backed by real backend snapshots (`GET /api/settings/snapshot`) and SSE (`GET /api/settings/events`) with write-only key management. |
 | **Phase 06** | **Capability Registry + Policy + Trace + Idempotency** | **COMPLETED** | Consolidated all tools into a unified Capability Registry with explicit execution policies, trace correlation, and idempotent run submission. |
 | **Phase 07** | **Intent + Alias Registry** | **COMPLETED** | High-speed deterministic accelerator and safety-sensitive intent router for common command shortcuts without invoking redundant LLM reasoning. |
-| **Phase 08** | **Specialist Agent Orchestration** | **COMPLETED** | Hermes child agent delegation via `delegate_task` (toolset `delegation`). 5 canonical specialist roles (`research`, `coding`, `productivity`, `memory`, `communications`). `DelegationPolicy` evaluating direct vs delegation. SSE event tracking (`subagent.start`/`subagent.complete`). Specialist tree card synthesis, 11-stage Debug Shell pipeline, and Settings Shell specialist registry. |
+| **Phase 08** | **Specialist Agent Orchestration** | **COMPLETED** | Hermes child agent delegation via `delegate_task` (toolset `delegation`). Established specialist definitions, delegation policy, SSE tracking (`subagent.start`/`subagent.complete`), and tree card synthesis. |
+| **Phase 09** | **Google Workspace Consolidation** | **COMPLETED** | Completed exhaustive parity matrix between JARVIS and Hermes Google capabilities; proved installed Hermes exposes no safer local Google toolset; preserved and guarded all 7 application-owned GWS tools (`search_gmail`, `read_gmail`, `get_calendar_events`, `search_drive`, `read_drive_file`, `create_google_doc`, `draft_email`). |
+| **Phase 10** | **Web Research + Provenance** | **COMPLETED** | Governed external web provenance around Hermes's native `web` toolset. Strict URL scheme trust (`http:`/`https:`), external text sanitization, deduplication, and max 20 source bounds integrated into `StructuredResult.sources`. |
+| **Phase 11** | **Advanced Obsidian Memory Retrieval** | **COMPLETED** | Derived in-memory index with mtime change detection over canonical vault Markdown notes (`AI/Memory/`). Scored retrieval with signal tracing and annotated source paths in context and diagnostics. |
+| **Phase 12** | **Obsidian Skills + Controlled Learning** | **COMPLETED** | Human-gated skill improvement via `propose_skill_improvement`. Deterministic unified diff previews, 5-evidence `skill_verification` strategy, and canonical vault skill lifecycle in `AI/Skills/<name>/SKILL.md`. |
+| **Phase 13** | **File + Document Intelligence** | **COMPLETED** | Governed file and document capabilities across explicitly allowed roots (`documents`, `vault`). Strict path containment blocking directory traversal and symlink escapes (`resolveAllowedPath`). Safe binary/media metadata extraction without raw byte dumping into context. Added `list_documents`, `read_document`, and human-confirmed `write_document` (total: 21 registered tools) backed by deterministic 5-evidence `document_verification`. |
 
 ---
 
-### In Progress / Upcoming Phases (Phases 9–25)
+### In Progress / Upcoming Phases (Phases 14–25)
 
 | Phase | Milestone | Objective & Scope |
 |---|---|---|
-| **Phase 09** | **Google Workspace Consolidation** | **ACTIVE NEXT** • Compare JARVIS GWS capabilities with Hermes-native Google Workspace, build parity matrix, migrate where Hermes is sufficient, remove redundant code after live verification. |
-| **Phase 10** | **Web Research + Provenance** | Grounded web search tools with source citation extraction, snippet provenance, and strict external content isolation. |
-| **Phase 11** | **Advanced Obsidian Memory Retrieval** | Semantic memory search, memory graph navigation, bi-directional link traversal, and associative recall directly inside the Obsidian vault. |
-| **Phase 12** | **Obsidian Skills + Controlled Learning** | Dynamic skill discovery from `AI/Skills/` using native Hermes `SKILL.md` format, enabling user-inspectable and editable skills. |
-| **Phase 13** | **File + Document Intelligence** | Server-side document analysis, text/PDF extraction, and contextual document summarization within safe vault paths. |
+| **Phase 14** | **Voice Experience v2 + Low-Latency Streaming** | **ACTIVE NEXT** • Real-time speech-to-text streaming, sentence chunking with concurrent TTS overlap, focus-aware Space hold-to-talk (PTT), and sub-500ms time-to-first-audio. |
+| **Phase 15** | **Scheduler + Proactive Assistant** | In-memory cron/timer scheduling engine, morning briefings, calendar reminders, and proactive background task notifications. |
+| **Phase 16** | **Multimodal Vision** | Local multimodal image analysis, desktop screenshot inspection, and visual reasoning without cloud dependencies. |
+| **Phase 17** | **Browser Automation + Media Playback** | Safe, bounded browser automation actions and YouTube playback control through dedicated, isolated browser sessions. |
+| **Phase 18** | **Basic App + Communication Actions** | Desktop application launching, window focus control, system shortcuts, and local messaging primitives. |
+| **Phase 19** | **Windows Computer Control & Sandbox** | Governed, sandboxed Windows system interaction with strict permission checks and rollback safeguards. |
+| **Phase 20** | **Remote Channels (Telegram First)** | Telegram bot and remote messaging channel integration reusing the exact same unified JARVIS/Hermes runtime core. |
+| **Phase 21** | **Undo / Recovery / Idempotency Expansion** | Comprehensive undo system for safe reversible operations, vault snapshots, and transactional action recovery. |
+| **Phase 22** | **Mark-LIV-Inspired Cinematic Experience Layer** | Cinematic audiovisual animations, dynamic state visualizers, responsive audio reactive waveforms, and ambient HUD elements. |
+| **Phase 23** | **Plugin / Extension Lifecycle Manager** | Declarative plugin management system for installing, enabling, disabling, and isolating third-party capabilities safely. |
+| **Phase 24** | **JARVIS Control Center + Live Settings** | Full live control center with real-time health grid, capability toggles, memory visualizer, and live telemetry inspector. |
+| **Phase 25** | **Final Preflight / Security / Performance / Regression** | Complete system security audit, OWASP review, latency profiling, stress testing, and final release hardening. |
 | **Phase 14** | **Voice Experience v2 + Low-Latency Streaming** | Real-time speech-to-text streaming, sentence chunking with concurrent TTS overlap, focus-aware Space hold-to-talk (PTT), and sub-500ms time-to-first-audio. |
 | **Phase 15** | **Scheduler + Proactive Assistant** | In-memory cron/timer scheduling engine, morning briefings, calendar reminders, and proactive background task notifications. |
 | **Phase 16** | **Multimodal Vision** | Local multimodal image analysis, desktop screenshot inspection, and visual reasoning without cloud dependencies. |
@@ -149,9 +165,14 @@ JARVIS is built under a rigorous, 25-phase evolutionary engineering roadmap (v11
 - **Privacy Guarantee**: Audio buffers exist only ephemerally in RAM during active transcription/synthesis. Zero audio is stored to disk or uploaded to any third-party cloud.
 - **Barge-in Support**: Speaking or pressing the stop button instantly interrupts active speech playback.
 
-### 3. Pinned Tool Security & Safe Capability Boundary
-- **17 Registered Tools**: Obsidian vault operations (`search_vault`, `read_note`, `create_note`), Google Workspace (`search_gmail`, `read_gmail`, `get_calendar_events`, `search_drive`, `read_drive_file`, `create_google_doc`, `draft_email`), Memory (`search_memory`, `store_memory`, `list_memory`, `delete_memory`), and System tools (`get_current_time`, `search_demo_data`, `read_demo_item`).
-- **Read/Write Partitioning**: Read operations execute autonomously; write operations (`create_note`, `create_google_doc`, `draft_email`) are intercepted before execution.
+### 3. Pinned Tool Security & Governed Capability Boundary
+- **21 Application-Owned Tools**:
+  - *Obsidian Vault*: `search_vault`, `read_note`, `create_note`.
+  - *Governed Documents & Files*: `list_documents`, `read_document`, `write_document` (contained to allowed roots `documents`, `vault`).
+  - *Google Workspace*: `search_gmail`, `read_gmail`, `get_calendar_events`, `search_drive`, `read_drive_file`, `create_google_doc`, `draft_email`.
+  - *Persistent SQLite Memory*: `search_memory`, `store_memory`, `list_memory`, `delete_memory`.
+  - *System & Demo*: `get_current_time`, `search_demo_data`, `read_demo_item`.
+- **Read/Write Partitioning**: Read operations execute autonomously; write operations (`create_note`, `create_google_doc`, `draft_email`, `write_document`, `propose_skill_improvement`) are intercepted before execution.
 - **Drafts Only**: Email actions are strictly limited to `draft_email`. Sending emails is prevented by design.
 - **Pinned Toolsets**: Hermes API server is verified on launch to ensure dangerous capabilities (`terminal`, `code_execution`, `raw_file_write`) are disabled.
 
@@ -160,8 +181,23 @@ JARVIS is built under a rigorous, 25-phase evolutionary engineering roadmap (v11
 - **Dual Approval Channels**: Confirmations can be approved via UI Confirmation Cards or spoken voice intent ("yes, proceed", "confirm").
 - **Deterministic Post-Execution Verification**: Model claims ("verified: true") are strictly ignored. Writes are verified by empirical application logic:
   - Notes: File existence and size checked on disk within canonical vault path.
+  - Documents: 5-evidence verification (execution, root containment, on-disk existence, file size, SHA-256 hash match).
   - Google Docs: Valid document ID and URL verified from GWS CLI output.
   - Emails: Confirmed as a draft in Gmail.
+
+### 5. Modular Subagent Architecture (11 Dedicated Specialists)
+To eliminate prompt bloat and prevent context overload on the main orchestrator, JARVIS delegates domain-specific work across **11 focused Hermes Specialist Subagents**:
+- **`frontend`**: Frontend & UI/UX (React, Next.js App Router, Tailwind, Remotion, UI/UX Pro Max).
+- **`backend`**: Backend & Systems (REST/GraphQL APIs, Auth patterns, PostgreSQL/SQLite, Go, Kotlin, TypeScript).
+- **`quality`**: Testing, Debugging & QA (Systematic debugging, TDD, profiling, Web Vitals, Security audits).
+- **`architecture`**: Architecture & Planning (Socratic brainstorming, Excalidraw diagrams, Graphify, Vercel deployments).
+- **`academic`**: Academic & Assignment Suite (Thesis structuring, literature reviews, CS lab reports, IEEE/APA citations, rubric auditing).
+- **`marketing`**: Product Launch & Growth (Product Hunt/Show HN playbooks, copywriting, social media distribution, technical SEO).
+- **`research`**: Deep vault and document retrieval, Google Drive search, knowledge synthesis.
+- **`coding`**: General code inspection and refactoring.
+- **`productivity`**: Calendar, daily briefings, agenda planning, loose ends.
+- **`memory`**: Persistent SQLite memories and Obsidian vault lookup.
+- **`communications`**: Gmail correspondence and email drafting.
 
 ---
 
@@ -170,7 +206,7 @@ JARVIS is built under a rigorous, 25-phase evolutionary engineering roadmap (v11
 JARVIS enforces strict quality gates on every commit. The codebase maintains 100% test coverage for core paths:
 
 ```powershell
-# Run the full unit and integration test suite (87 files, 524 tests)
+# Run the full unit and integration test suite (100 files, 612 tests)
 npm test
 
 # Run code style & linting checks (ESLint 9)

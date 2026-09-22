@@ -65,6 +65,24 @@ describe("DelegationPolicy", () => {
     expect(plan.shouldDelegate).toBe(true);
     expect(plan.targetSpecialists).toEqual(["productivity"]);
     expect(plan.tasks[0].goal).toContain("inspect calendar schedule for this week");
+
+    const frontendPlan = delegationPolicy.evaluateDelegation(
+      "delegate to specialist to build a responsive nextjs landing page with tailwind"
+    );
+    expect(frontendPlan.shouldDelegate).toBe(true);
+    expect(frontendPlan.targetSpecialists).toEqual(["frontend"]);
+
+    const academicPlan = delegationPolicy.evaluateDelegation(
+      "create a specialist to write an academic literature review with citations"
+    );
+    expect(academicPlan.shouldDelegate).toBe(true);
+    expect(academicPlan.targetSpecialists).toEqual(["academic"]);
+
+    const qualityPlan = delegationPolicy.evaluateDelegation(
+      "spawn a specialist to run systematic debugging and performance audit"
+    );
+    expect(qualityPlan.shouldDelegate).toBe(true);
+    expect(qualityPlan.targetSpecialists).toEqual(["quality"]);
   });
 
   it("validates child specialist permissions against parent capabilities", () => {

@@ -9,6 +9,12 @@ export const specialistRoleSchema = z.enum([
   "productivity",
   "memory",
   "communications",
+  "frontend",
+  "backend",
+  "quality",
+  "academic",
+  "marketing",
+  "architecture",
 ]);
 
 export type SpecialistRole = z.infer<typeof specialistRoleSchema>;
