@@ -264,6 +264,8 @@ export const memoryDiagnosticSchema = z.object({
   outcome: diagnosticOutcomeSchema,
   querySummary: z.string().max(200).optional(),
   count: z.number().int().nonnegative().optional(),
+  // Phase 11: vault-relative paths of notes that influenced the answer.
+  sourcePaths: z.array(z.string().max(300)).max(10).optional(),
   failure: diagnosticFailureSchema.optional(),
 });
 export type MemoryDiagnostic = z.infer<typeof memoryDiagnosticSchema>;

@@ -58,3 +58,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Personal Obsidian vault (user notes/memory — never committed)
+/Jarvis Memory/
+

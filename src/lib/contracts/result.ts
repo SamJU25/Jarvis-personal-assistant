@@ -95,8 +95,14 @@ export const resultCardSchema = z.discriminatedUnion("type", [
 export const sourceSchema = z.object({
   id: z.string(),
   title: z.string(),
-  kind: z.enum(["calendar", "email", "note", "document", "research"]),
+  kind: z.enum(["calendar", "email", "note", "document", "research", "web"]),
   location: z.string(),
+  // Web provenance (Phase 10): present only for web-sourced citations.
+  url: z
+    .string()
+    .regex(/^https?:\/\//i, "Web source URL must be http(s)")
+    .optional(),
+  retrievedAt: z.string().datetime().optional(),
 });
 
 export const structuredResultSchema = z.object({

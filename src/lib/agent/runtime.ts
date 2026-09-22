@@ -19,7 +19,7 @@ import { getDiagnosticService, DiagnosticService } from "@/lib/diagnostics/servi
 import type { FailureCode, DiagnosticOutcome } from "@/lib/contracts/diagnostics";
 import type { StructuredResult } from "@/lib/contracts/result";
 import { HermesProvider } from "@/lib/agent/providers/hermes-provider";
-import { searchObsidianMemory, formatObsidianMemoryContext } from "@/lib/obsidian/memory";
+import { searchObsidianMemoryWithTrace, formatObsidianMemoryContext } from "@/lib/obsidian/memory";
 import { discoverObsidianSkills, toSkillDefinition } from "@/lib/obsidian/skills";
 import { getAgentEventBus } from "@/lib/agent/event-bus";
 import { idempotencyService, createOperationKey } from "@/lib/tools/idempotency";
@@ -432,9 +432,13 @@ export class AgentRuntime {
       // Inject canonical Obsidian durable memory context
       const memStart = performance.now();
       let memCount = 0;
+      let obsidianSourcePaths: string[] = [];
       try {
-        const obsidianMemories = await searchObsidianMemory(input.message, { limit: 5 });
+        // Phase 11: traced retrieval — records which notes influenced the answer.
+        const traced = await searchObsidianMemoryWithTrace(input.message, { limit: 5 });
+        const obsidianMemories = traced.matches.map((m) => m.entry);
         memCount += obsidianMemories.length;
+        obsidianSourcePaths = traced.matches.map((m) => m.entry.relativePath).slice(0, 10);
         const obsidianMemContext = formatObsidianMemoryContext(obsidianMemories);
         if (obsidianMemContext) {
           turnInstructions += `\n\n${obsidianMemContext}`;
@@ -460,6 +464,7 @@ export class AgentRuntime {
         outcome: "success",
         querySummary: input.message.slice(0, 100),
         count: memCount,
+        ...(obsidianSourcePaths.length > 0 ? { sourcePaths: obsidianSourcePaths } : {}),
       });
 
       // Hermes Core Run Path: If active provider is HermesProvider, Hermes natively owns the run loop via /v1/runs

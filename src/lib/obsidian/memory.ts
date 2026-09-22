@@ -2,8 +2,12 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import crypto from "node:crypto";
 import { getObsidianVaultPath } from "./config";
-import { resolveVaultPath, toVaultRelativePath } from "./path";
+import { resolveVaultPath } from "./path";
 import { containsSecret } from "@/lib/memory/secrets";
+import { getIndexedMemoryFiles, invalidateMemoryIndex } from "./memory-index";
+
+export { invalidateMemoryIndex };
+export type { ParsedMemoryFile } from "./memory-parse";
 
 export interface ObsidianMemoryEntry {
   id: string;
@@ -39,48 +43,7 @@ async function ensureMemoryDir(vaultRoot: string): Promise<string> {
   return fullDir;
 }
 
-/**
- * Parses simple YAML-style frontmatter from markdown file.
- */
-function parseFrontmatter(raw: string): {
-  frontmatter: Record<string, string | string[]>;
-  body: string;
-} {
-  const frontmatter: Record<string, string | string[]> = {};
-  const trimmed = raw.trim();
-
-  if (!trimmed.startsWith("---")) {
-    return { frontmatter, body: trimmed };
-  }
-
-  const endIdx = trimmed.indexOf("\n---", 3);
-  if (endIdx === -1) {
-    return { frontmatter, body: trimmed };
-  }
-
-  const header = trimmed.slice(3, endIdx).trim();
-  const body = trimmed.slice(endIdx + 4).trim();
-
-  for (const line of header.split("\n")) {
-    const colonIdx = line.indexOf(":");
-    if (colonIdx === -1) continue;
-    const key = line.slice(0, colonIdx).trim();
-    const val = line.slice(colonIdx + 1).trim();
-
-    if (val.startsWith("[") && val.endsWith("]")) {
-      const items = val
-        .slice(1, -1)
-        .split(",")
-        .map((s) => s.trim().replace(/^["']|["']$/g, ""))
-        .filter(Boolean);
-      frontmatter[key] = items;
-    } else {
-      frontmatter[key] = val.replace(/^["']|["']$/g, "");
-    }
-  }
-
-  return { frontmatter, body };
-}
+// parseFrontmatter moved to ./memory-parse (shared with the derived index).
 
 /**
  * Serializes frontmatter and body into Markdown content.
@@ -151,12 +114,16 @@ export async function storeObsidianMemory(
 
   const fileContent = serializeMemory(entry);
   await fs.writeFile(fullPath, fileContent, "utf-8");
+  invalidateMemoryIndex(vaultRoot);
 
   return entry;
 }
 
 /**
  * Lists all memory entries in the canonical Obsidian AI/Memory/ directory.
+ * Reads through the derived index with freshness detection: only files whose
+ * mtime/size changed since the previous pass are re-parsed, so edits to
+ * canonical notes are picked up without any second store.
  */
 export async function listObsidianMemory(
   options?: { category?: string; limit?: number },
@@ -168,51 +135,36 @@ export async function listObsidianMemory(
   }
 
   const memDir = await ensureMemoryDir(vaultRoot);
-
-  let fileNames: string[] = [];
-  try {
-    fileNames = await fs.readdir(memDir);
-  } catch {
-    return [];
-  }
+  const { entries: indexed } = await getIndexedMemoryFiles(vaultRoot, memDir);
 
   const entries: ObsidianMemoryEntry[] = [];
-  const mdFiles = fileNames.filter((f) => f.endsWith(".md"));
 
-  for (const file of mdFiles) {
-    try {
-      const fullPath = path.join(memDir, file);
-      const raw = await fs.readFile(fullPath, "utf-8");
-      const { frontmatter, body } = parseFrontmatter(raw);
+  for (const { fileName, frontmatter, body } of indexed) {
+    const id = (frontmatter.id as string) || path.basename(fileName, ".md");
+    const title = (frontmatter.title as string) || path.basename(fileName, ".md");
+    const category = (frontmatter.category as string) || "general";
+    const tags = Array.isArray(frontmatter.tags)
+      ? (frontmatter.tags as string[])
+      : typeof frontmatter.tags === "string"
+      ? [frontmatter.tags]
+      : [];
+    const createdAt = (frontmatter.createdAt as string) || new Date().toISOString();
+    const updatedAt = (frontmatter.updatedAt as string) || createdAt;
 
-      const id = (frontmatter.id as string) || path.basename(file, ".md");
-      const title = (frontmatter.title as string) || path.basename(file, ".md");
-      const category = (frontmatter.category as string) || "general";
-      const tags = Array.isArray(frontmatter.tags)
-        ? (frontmatter.tags as string[])
-        : typeof frontmatter.tags === "string"
-        ? [frontmatter.tags]
-        : [];
-      const createdAt = (frontmatter.createdAt as string) || new Date().toISOString();
-      const updatedAt = (frontmatter.updatedAt as string) || createdAt;
-
-      if (options?.category && category.toLowerCase() !== options.category.toLowerCase()) {
-        continue;
-      }
-
-      entries.push({
-        id,
-        title,
-        category,
-        tags,
-        content: body,
-        relativePath: toVaultRelativePath(vaultRoot, fullPath),
-        createdAt,
-        updatedAt,
-      });
-    } catch {
-      // skip unreadable files gracefully
+    if (options?.category && category.toLowerCase() !== options.category.toLowerCase()) {
+      continue;
     }
+
+    entries.push({
+      id: id || `file-${entries.length}`,
+      title: title || "Untitled",
+      category,
+      tags,
+      content: body,
+      relativePath: `${MEMORY_DIR}/${fileName}`,
+      createdAt,
+      updatedAt,
+    });
   }
 
   entries.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
@@ -225,55 +177,109 @@ export async function listObsidianMemory(
 }
 
 /**
- * Searches memories inside Obsidian AI/Memory/ based on query terms matching title, tags, category, and body.
+ * Searches memories inside Obsidian AI/Memory/ based on query terms matching
+ * title, tags, category, and body. Keyword-first scoring; delegates to the
+ * traced retrieval path so every search returns the same ranking.
  */
 export async function searchObsidianMemory(
   query: string,
   options?: SearchObsidianMemoryOptions,
   vaultRootOverride?: string
 ): Promise<ObsidianMemoryEntry[]> {
+  const { matches } = await searchObsidianMemoryWithTrace(query, options, vaultRootOverride);
+  return matches.map((m) => m.entry);
+}
+
+/**
+ * A scored retrieval match: which note influenced the answer and why.
+ * Exact phrase matches rank above single-word hits; freshness boosts recent
+ * notes slightly without ever changing the canonical store.
+ */
+export interface MemoryMatchTrace {
+  entry: ObsidianMemoryEntry;
+  score: number;
+  matchedTerms: string[];
+  /** How the note matched (trace metadata for diagnostics). */
+  signals: Array<"exact_title" | "exact_content" | "title_word" | "tag_word" | "category_word" | "content_word">;
+}
+
+/**
+ * Keyword-first scored retrieval with an explicit trace. This is the same
+ * ranking used by searchObsidianMemory, but returns the score, matched terms,
+ * and signals so retrieval traces can show which notes influenced the answer.
+ */
+export async function searchObsidianMemoryWithTrace(
+  query: string,
+  options?: SearchObsidianMemoryOptions,
+  vaultRootOverride?: string
+): Promise<{ matches: MemoryMatchTrace[]; totalIndexed: number }> {
   const allEntries = await listObsidianMemory({ category: options?.category }, vaultRootOverride);
+
   if (!query || !query.trim()) {
     const limit = options?.limit ?? 10;
-    return allEntries.slice(0, limit);
+    return {
+      matches: allEntries
+        .slice(0, limit)
+        .map((entry) => ({ entry, score: 1, matchedTerms: [], signals: [] })),
+      totalIndexed: allEntries.length,
+    };
   }
 
   const queryTrimmed = query.trim().toLowerCase();
-  const words = queryTrimmed
-    .split(/[^a-z0-9]+/)
-    .filter((w) => w.length > 1);
+  const words = queryTrimmed.split(/[^a-z0-9]+/).filter((w) => w.length > 1);
 
   if (words.length === 0) {
     const limit = options?.limit ?? 10;
-    return allEntries.slice(0, limit);
+    return {
+      matches: allEntries
+        .slice(0, limit)
+        .map((entry) => ({ entry, score: 1, matchedTerms: [], signals: [] })),
+      totalIndexed: allEntries.length,
+    };
   }
 
-  const scored = allEntries.map((entry) => {
+  const traced: MemoryMatchTrace[] = [];
+  for (const entry of allEntries) {
     let score = 0;
+    const signals: MemoryMatchTrace["signals"] = [];
+    const matchedTerms = new Set<string>();
     const titleLower = entry.title.toLowerCase();
     const contentLower = entry.content.toLowerCase();
     const tagsLower = entry.tags.map((t) => t.toLowerCase());
+    const categoryLower = entry.category.toLowerCase();
 
-    if (titleLower.includes(queryTrimmed)) score += 10;
-    if (contentLower.includes(queryTrimmed)) score += 8;
-
-    for (const w of words) {
-      if (titleLower.includes(w)) score += 5;
-      if (tagsLower.some((t) => t.includes(w))) score += 4;
-      if (entry.category.toLowerCase().includes(w)) score += 3;
-      if (contentLower.includes(w)) score += 1;
+    if (titleLower.includes(queryTrimmed)) {
+      score += 10;
+      signals.push("exact_title");
+      matchedTerms.add(queryTrimmed);
+    }
+    if (contentLower.includes(queryTrimmed)) {
+      score += 8;
+      signals.push("exact_content");
+      matchedTerms.add(queryTrimmed);
     }
 
-    return { entry, score };
-  });
+    for (const w of words) {
+      let hit = false;
+      if (titleLower.includes(w)) { score += 5; signals.push("title_word"); hit = true; }
+      if (tagsLower.some((t) => t.includes(w))) { score += 4; signals.push("tag_word"); hit = true; }
+      if (categoryLower.includes(w)) { score += 3; signals.push("category_word"); hit = true; }
+      if (contentLower.includes(w)) { score += 1; signals.push("content_word"); hit = true; }
+      if (hit) matchedTerms.add(w);
+    }
 
-  const matches = scored
-    .filter((item) => item.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .map((item) => item.entry);
+    if (score > 0) {
+      // Freshness: recently updated notes get a small deterministic boost.
+      const ageDays = Math.max(0, (Date.now() - new Date(entry.updatedAt).getTime()) / 86_400_000);
+      const freshness = ageDays < 7 ? 1 : ageDays < 30 ? 0.5 : 0;
+      score += freshness;
+      traced.push({ entry, score, matchedTerms: Array.from(matchedTerms), signals });
+    }
+  }
 
+  traced.sort((a, b) => b.score - a.score);
   const limit = options?.limit ?? 10;
-  return matches.slice(0, limit);
+  return { matches: traced.slice(0, limit), totalIndexed: allEntries.length };
 }
 
 /**
@@ -293,6 +299,7 @@ export async function deleteObsidianMemory(
   try {
     const fullPath = await resolveVaultPath(vaultRoot, target.relativePath);
     await fs.unlink(fullPath);
+    invalidateMemoryIndex(vaultRoot);
     return true;
   } catch {
     return false;
@@ -313,7 +320,9 @@ export function formatObsidianMemoryContext(
 
   let charCount = lines[0].length;
   for (const m of memories) {
-    const item = `- [${m.category}] ${m.title}: ${m.content}`;
+    // Source/path metadata makes retrieval traces show which notes influenced
+    // the answer, and keeps external content clearly attributed.
+    const item = `- [${m.category}] ${m.title} (${m.relativePath}): ${m.content}`;
     if (charCount + item.length > maxChars) {
       lines.push("... (additional memories truncated)");
       break;

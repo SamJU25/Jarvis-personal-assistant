@@ -1,8 +1,12 @@
 import { randomUUID } from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
 import type {
   ConfirmationActionCategory,
   PendingConfirmation,
 } from "@/lib/contracts/confirmation";
+import { buildSkillDiff } from "@/lib/learning/diff";
+import { getObsidianVaultPath } from "@/lib/obsidian/config";
 
 export interface CreateConfirmationOptions {
   originatingRunId: string;
@@ -62,6 +66,36 @@ export function buildConfirmationDetails(
       target: `To: ${to}`,
       summary: `Draft email to ${to}: "${subject}" (Draft only, will NOT be sent)`,
       preview: `Subject: ${subject}\n\n${body.slice(0, 500)}`,
+    };
+  }
+
+  if (toolId === "propose_skill_improvement") {
+    const skill = typeof parameters.skill === "string" ? parameters.skill : "unknown";
+    const rationale = typeof parameters.rationale === "string" ? parameters.rationale : "";
+    const proposed = typeof parameters.content === "string" ? parameters.content : "";
+
+    // Safe diff preview against the canonical vault copy (bounded sync read).
+    let diffPreview = proposed.slice(0, 800);
+    const vaultRoot = getObsidianVaultPath();
+    if (vaultRoot && /^[a-z0-9][a-z0-9-]*$/.test(skill)) {
+      try {
+        const skillPath = path.join(vaultRoot, "AI", "Skills", skill, "SKILL.md");
+        const stat = fs.statSync(skillPath);
+        if (stat.isFile() && stat.size <= 200_000) {
+          const current = fs.readFileSync(skillPath, "utf-8");
+          diffPreview = buildSkillDiff(current, proposed).rendered;
+        }
+      } catch {
+        // Skill unreadable: fall back to a content preview only.
+      }
+    }
+
+    return {
+      actionCategory: "other",
+      title: "UPDATE SKILL",
+      target: `AI/Skills/${skill}/SKILL.md`,
+      summary: `Update Obsidian skill "${skill}" — requires your approval. Reason: ${rationale.slice(0, 160)}`,
+      preview: diffPreview.slice(0, 4000),
     };
   }
 

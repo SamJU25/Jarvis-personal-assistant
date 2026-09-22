@@ -3,6 +3,7 @@ import { CreateNoteVerificationStrategy } from "./strategies/note-verification";
 import { CreateGoogleDocVerificationStrategy } from "./strategies/doc-verification";
 import { DraftEmailVerificationStrategy } from "./strategies/email-verification";
 import { DefaultReadVerificationStrategy } from "./strategies/read-verification";
+import { SkillVerificationStrategy } from "./strategies/skill-verification";
 
 export class VerificationRegistry {
   private readonly strategies = new Map<string, VerificationStrategy>();
@@ -17,17 +18,20 @@ export class VerificationRegistry {
     const docStrategy = new CreateGoogleDocVerificationStrategy();
     const emailStrategy = new DraftEmailVerificationStrategy();
     const readStrategy = new DefaultReadVerificationStrategy();
+    const skillStrategy = new SkillVerificationStrategy();
 
     // Register by canonical strategy ID
     this.register("note_verification", noteStrategy);
     this.register("doc_verification", docStrategy);
     this.register("email_verification", emailStrategy);
     this.register("read_verification", readStrategy);
+    this.register("skill_verification", skillStrategy);
 
     // Backward-compatible registration by tool ID alias
     this.register("create_note", noteStrategy);
     this.register("create_google_doc", docStrategy);
     this.register("draft_email", emailStrategy);
+    this.register("propose_skill_improvement", skillStrategy);
   }
 
   register(strategyOrToolId: string, strategy: VerificationStrategy): void {

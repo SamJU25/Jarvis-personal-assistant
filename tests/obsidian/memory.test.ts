@@ -121,7 +121,8 @@ describe("Obsidian Canonical Memory Store (AI/Memory/)", () => {
     const context = formatObsidianMemoryContext([entry1]);
     expect(context).not.toBeNull();
     expect(context).toContain("--- RETRIEVED OBSIDIAN MEMORIES");
-    expect(context).toContain("[guidelines] Rule 1: Always check types before committing.");
+    // Phase 11: context lines carry source/path metadata for retrieval traces
+    expect(context).toContain(`[guidelines] Rule 1 (${entry1.relativePath}): Always check types before committing.`);
     expect(context).toContain("--- END MEMORIES ---");
 
     const emptyContext = formatObsidianMemoryContext([]);

@@ -287,6 +287,8 @@ export async function POST(request: NextRequest) {
             ? "note"
             : authorizedConfirmation.toolId === "create_google_doc"
             ? "Google Doc"
+            : authorizedConfirmation.toolId === "propose_skill_improvement"
+            ? "skill update"
             : "email draft";
         const failureSpeech = `I couldn't verify that the ${actionName} was created. ${failureReason}`;
 
@@ -385,6 +387,31 @@ export async function POST(request: NextRequest) {
           kind: "email",
           location: `Gmail Draft (${out.draftId})`,
         });
+      } else if (authorizedConfirmation.toolId === "propose_skill_improvement") {
+        // Phase 12: controlled learning — report the verified skill update.
+        const skill = typeof out.skillName === "string" ? out.skillName : params.skill || "skill";
+        const version = typeof out.version === "string" ? out.version : "";
+        const previous = typeof out.previousVersion === "string" ? out.previousVersion : "";
+        speech = `Updated and verified skill "${skill}" to version ${version}.${
+          previous ? ` Version ${previous} is archived and can be rolled back.` : ""
+        }`;
+        cards.push({
+          type: "document",
+          id: `skill-${authorizedConfirmation.id}`,
+          label: "Obsidian Skill",
+          title: `${skill} v${version}`,
+          summary: `Verified canonical SKILL.md written to ${out.relativePath}`,
+          format: "SKILL.md",
+          modifiedAt: new Date().toISOString(),
+        });
+        if (typeof out.relativePath === "string") {
+          sources.push({
+            id: `src-${authorizedConfirmation.id}`,
+            title: `${skill} v${version}`,
+            kind: "document",
+            location: out.relativePath,
+          });
+        }
       }
 
       const finalStructuredResult: StructuredResult = {

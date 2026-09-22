@@ -5,11 +5,11 @@ import { z } from "zod";
 import type { JarvisTool } from "@/lib/contracts/tool";
 
 describe("Phase 06: Capability Registry & Declarative Metadata", () => {
-  it("all 17 registered tools declare capability metadata", () => {
+  it("all 18 registered tools declare capability metadata", () => {
     const registry = createDefaultToolRegistry();
     const tools = registry.list();
 
-    expect(tools.length).toBe(17);
+    expect(tools.length).toBe(18);
 
     for (const tool of tools) {
       expect(tool.id).toBeTruthy();

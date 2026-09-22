@@ -15,6 +15,12 @@ import { HermesConnectionError, HermesTimeoutError, HermesAuthError } from "@/li
 import type { HermesChatMessage } from "@/lib/contracts/hermes";
 import { specialistRegistry } from "@/lib/specialist/registry";
 import type { SpecialistRun } from "@/lib/contracts/specialist";
+import {
+  WEB_TOOL_PATTERN,
+  extractProvenanceFromToolData,
+  mergeWebSources,
+} from "@/lib/research/provenance";
+import type { Source } from "@/lib/contracts/result";
 
 class EventQueue implements AsyncIterable<AgentEvent> {
   private values: AgentEvent[] = [];
@@ -322,6 +328,8 @@ export class HermesProvider implements AgentProvider {
       // Stream events from /v1/runs/{run_id}/events
       let finalResultFrame: AgentApiFrame | undefined;
       const specialistRuns = new Map<string, SpecialistRun>();
+      // Phase 10: web research provenance captured from Hermes tool events.
+      const webEvidence: Source[] = [];
 
       for await (const sseEvent of this.client.streamRunEvents(runId, options.signal)) {
         if (options.signal?.aborted) {
@@ -354,6 +362,24 @@ export class HermesProvider implements AgentProvider {
               label: `Tool ${toolName} ${hasError ? "failed" : "completed"}`,
             },
           };
+
+          // Phase 10: capture provenance from web research tools. The data
+          // payload is untrusted; extraction sanitizes and bounds everything.
+          if (!hasError && WEB_TOOL_PATTERN.test(toolName)) {
+            const captured = extractProvenanceFromToolData(data);
+            if (captured.length > 0) {
+              webEvidence.push(...captured);
+              yield {
+                type: "event",
+                event: {
+                  id: crypto.randomUUID(),
+                  type: "tool_completed",
+                  timestamp: new Date().toISOString(),
+                  label: `Evidence captured: ${captured.length} source${captured.length === 1 ? "" : "s"} from ${toolName}`,
+                },
+              };
+            }
+          }
         } else if (evName === "subagent.start" || evName === "subagent.spawn_requested") {
           const subagentId = String(data.subagent_id || `sa-${Date.now()}`);
           const goal = String(data.goal || (data.preview as string) || "Delegated task");
@@ -414,6 +440,11 @@ export class HermesProvider implements AgentProvider {
           const durationMs = Math.max(1, Date.now() - startTime);
 
           if (decision.type === "direct") {
+            // Phase 10: preserve source provenance — model-declared sources
+            // win; captured web evidence fills the gaps, deduplicated/bounded.
+            if (webEvidence.length > 0) {
+              decision.result.sources = mergeWebSources(decision.result.sources, webEvidence);
+            }
             if (specialistRuns.size > 0) {
               const lines: string[] = ["HERMES"];
               const list = Array.from(specialistRuns.values());

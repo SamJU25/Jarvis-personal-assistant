@@ -91,8 +91,8 @@ describe("ToolRegistry", () => {
     const registry = createDefaultToolRegistry();
     const metadata = registry.getMetadata();
 
-    // 3 demo + 3 obsidian + 7 google (5 read + 2 write) + 4 memory = 17 tools
-    expect(metadata.length).toBe(17);
+    // 3 demo + 3 obsidian + 7 google (5 read + 2 write) + 4 memory + 1 learning = 18 tools
+    expect(metadata.length).toBe(18);
     for (const item of metadata) {
       expect(item).toHaveProperty("id");
       expect(item).toHaveProperty("name");
