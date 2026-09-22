@@ -204,6 +204,178 @@ To eliminate prompt bloat and prevent context overload on the main orchestrator,
 - **`memory`**: Persistent SQLite memories and Obsidian vault lookup.
 - **`communications`**: Gmail correspondence and email drafting.
 
+### 6. In-Depth: How Obsidian Stores Memory and Skills
+
+JARVIS avoids opaque, cloud-locked, or proprietary databases for your personal intelligence. Instead, your local Obsidian vault (`f:\Jarvis\Jarvis Memory`) serves as the **canonical, human-readable, single source of truth**. You can open Obsidian at any time, browse your memories, edit your skills in plain Markdown, or sync them with your mobile devices via Obsidian Sync or Git without any proprietary barriers.
+
+```
+F:\Jarvis\Jarvis Memory\
+├── AI/                          <-- Dedicated, strictly contained JARVIS boundary
+│   ├── Memory/                  <-- Canonical Long-Term Memories (*.md)
+│   │   ├── mem-user-tech-stack.md
+│   │   ├── mem-project-roadmap.md
+│   │   └── mem-personal-preferences.md
+│   ├── Skills/                  <-- Canonical Runtime Skills (<name>/SKILL.md)
+│   │   ├── academic-writer/
+│   │   │   ├── SKILL.md
+│   │   │   └── .history/        <-- Version rollback backups
+│   │   ├── frontend-developer/
+│   │   │   └── SKILL.md
+│   │   ├── marketing-specialist/
+│   │   │   └── SKILL.md
+│   │   └── ... (22 skills)
+│   └── README.md
+└── (All your personal notes)    <-- Pristine; untouched by JARVIS
+```
+
+#### A. Durable Memory Format (`AI/Memory/`)
+Every memory is saved as an individual Markdown note with structured, typed YAML frontmatter:
+```markdown
+---
+id: "mem-e8f2a1b9"
+title: "User Programming Stack & Career Goals"
+category: "preference"
+tags: ["typescript", "nextjs", "python", "ai-engineer"]
+createdAt: "2026-09-20T14:32:00Z"
+updatedAt: "2026-09-22T07:15:00Z"
+---
+The user is an engineering student focused on becoming a Web Developer and AI Engineer.
+Prefers Next.js App Router, TypeScript, Tailwind CSS, and rigorous test coverage.
+```
+
+* **Lightweight `mtime` Change Detection (`src/lib/obsidian/memory-index.ts`)**:
+  - JARVIS does not run heavy, battery-draining background daemon file watchers.
+  - Instead, it maintains a disposable, derived in-memory index.
+  - On every user query, JARVIS checks the filesystem `mtime` (modified timestamp) of `AI/Memory/` and individual note files using native Node.js `fs.stat`.
+  - If you add, edit, or delete notes in Obsidian desktop or mobile, JARVIS detects the `mtime` drift instantly on the next turn and re-indexes only the modified files in `<2ms`.
+* **Multi-Tier Scored Retrieval & Signal Tracing**:
+  - Retrieval uses a deterministic, keyword-first scoring engine:
+    - **Title Matches**: `weight: 3.0` (strongest intentional anchor).
+    - **Tag Matches**: `weight: 2.5` (domain categorization).
+    - **Category Matches**: `weight: 1.5` (workflow affinity).
+    - **Body Content Overlap**: `weight: 1.0` (semantic context).
+  - Every retrieved memory includes a full **Signal Trace** (e.g. `matched_terms: ["typescript", "ai-engineer"], score: 7.0, source: "AI/Memory/mem-user-tech-stack.md"`). This trace is visible in the 11-stage Debug Shell (`/debug`) under the `MEMORY` stage, providing 100% transparent auditability into why an AI response was informed by a memory.
+* **Bounded Context Retrieval**:
+  - To prevent prompt bloat, memory retrieval is strictly bounded (top-5 notes by default, capped at 10). Notes are formatted into clean XML context tags for the LLM.
+* **Proactive Secret Filtering (`containsSecret()`)**:
+  - Before writing any note to disk via `store_memory` or `create_note`, the content is scanned against high-entropy regex patterns (OpenAI `sk-...`, GitHub `ghp_...`, Bearer tokens, private keys, passwords). If a secret is detected, storage is rejected immediately to protect your vault from credential leaks.
+
+#### B. Runtime Skill Discovery & Controlled Learning (`AI/Skills/`)
+* **Dynamic Skill Loading (`src/lib/obsidian/skills.ts`)**:
+  - On startup or on-demand refresh, `discoverObsidianSkills()` traverses `AI/Skills/*/SKILL.md`.
+  - It parses frontmatter (`name`, `description`, `tags`, `category`, `tools`) and validates it against the Zod `SkillDefinition` contract.
+  - Skills are hot-loaded into the runtime `SkillRegistry` without restarting the application.
+* **Semantic & Intent-Driven Selection (`selectSkill()`)**:
+  - When you prompt JARVIS (e.g. "Draft an IEEE literature review" or "Prepare my morning briefing"), the system evaluates user intent against skill descriptions and loads the specialized instructions into the active context.
+* **Human-Gated Controlled Learning (`src/lib/learning/`)**:
+  - JARVIS learns from corrections and user instructions, but **cannot autonomously self-modify its own instructions**.
+  - When an improvement is suggested via `propose_skill_improvement`, JARVIS computes a deterministic unified diff.
+  - The UI renders a **Human Confirmation Preview Card** displaying the exact line-by-line diff (green additions `+`, red deletions `-`).
+  - The previous version is backed up in `.history/<skill>-<timestamp>.md` before disk write. If a change is undesirable, you can roll it back instantly.
+
+---
+
+### 7. In-Depth: How Hermes Sub-Agents Handle Work for JARVIS
+
+To prevent the main orchestrator from slowing down under heavy prompts, bloated contexts, or complex tool runs, JARVIS implements an asynchronous hierarchical architecture: **Top-Level Orchestrator** vs **Leaf Specialist Subagents**.
+
+```
+                  1. User Request ("Build Next.js component & test it")
+                                     │
+                                     ▼
+                    ┌──────────────────────────────────┐
+                    │       JARVIS / HERMES CORE       │
+                    │      (Top-Level Conductor)       │
+                    └────────────────┬─────────────────┘
+                                     │
+                        2. Evaluates Delegation Policy
+                        3. Calls native `delegate_task`
+                                     │
+                 ┌───────────────────┴───────────────────┐
+                 ▼                                       ▼
+    ┌───────────────────────────┐           ┌───────────────────────────┐
+    │     Child Subagent A      │           │     Child Subagent B      │
+    │  (Frontend Specialist)    │           │    (Quality Specialist)   │
+    │                           │           │                           │
+    │ - Fresh, isolated context │           │ - Fresh, isolated context │
+    │ - Loads only UI skills    │           │ - Loads only TDD skills   │
+    │ - Executes UI tools       │           │ - Runs tests / vitest     │
+    └────────────┬──────────────┘           └────────────┬──────────────┘
+                 │                                       │
+                 └───────────────────┬───────────────────┘
+                                     │ 4. Subagent SSE Events:
+                                     │    subagent.start / subagent.complete
+                                     ▼
+                    ┌──────────────────────────────────┐
+                    │      JARVIS Stream Handler       │
+                    │   - Synthesizes Specialist Tree  │
+                    │   - Enforces Permission Bounds   │
+                    │   - Strips 90% Raw Verbose Logs  │
+                    └────────────────┬─────────────────┘
+                                     │
+                                     ▼
+                    ┌──────────────────────────────────┐
+                    │        FINAL RESULT CARD         │
+                    │     "Task completed cleanly"     │
+                    │   ├─ Frontend Specialist     ✓   │
+                    │   ├─ Quality Specialist      ✓   │
+                    │   └─ Synthesis               ✓   │
+                    └──────────────────────────────────┘
+```
+
+#### A. Orchestrator vs. Leaf Subagent Roles
+- **JARVIS Orchestrator**: The top-level conductor that interfaces with the user, evaluates intent, decides whether to execute directly or delegate, and synthesizes the final conversational response.
+- **Hermes Leaf Specialists**: Task-focused child agents spawned via Hermes's native `delegate_task` in the `delegation` toolset (`f:\hermes-agent\tools\delegate_tool.py`). Each specialist is assigned a scoped subtask, a designated role persona, and a subset of permitted tools.
+
+#### B. The Load Question: "Can I Add As Many Subagents As I Want?"
+A common architectural concern is whether adding many subagents will create severe system lag or GPU overload:
+1. **Registered Specialist Definitions (Zero Overhead)**:
+   - You can define **dozens or hundreds** of specialist personas and skills in the registry.
+   - When idle, registered specialist definitions are simple static JSON/Markdown files that consume **zero CPU, GPU, or RAM**.
+2. **Runtime Concurrency & Depth Bounds (Strictly Guarded)**:
+   - During live execution, JARVIS prevents resource starvation and infinite agent loops through hard architectural limits (`src/lib/specialist/policy.ts`):
+     - `MAX_DEPTH = 1`: Subagents are strictly leaf nodes. A child subagent can **never** spawn sub-subagents.
+     - `concurrencyLimit = 2`: At most 2 child subagents can execute concurrently.
+     - `maxExecutionTimeMs = 60000`: Hard 60-second timeout per subagent execution.
+   - This ensures your local machine runs smoothly regardless of how many specialized roles exist in your library.
+
+#### C. Fresh Context Window & 90% Token Savings
+- **The Problem with Single-Agent Monoliths**: If a single agent attempts a multi-step task (e.g. running tests, inspecting 10 files, generating code, reviewing style), intermediate tool logs and stack traces flood the context window, quickly consuming 30k–60k tokens. This causes extreme response latency, high RAM usage, and reasoning degradation.
+- **The Subagent Isolation Solution**:
+  - Each Hermes child subagent starts with a **100% fresh, isolated conversation session**.
+  - It receives only its targeted goal and required context.
+  - The subagent performs its tools and reasoning in isolation.
+  - When finished, the subagent returns a concise summary of its findings or created artifacts.
+  - Over 90% of raw terminal outputs, intermediate drafts, and verbose logs are absorbed inside the child session, leaving the parent orchestrator fast, responsive, and sharp.
+
+#### D. The 11 Pre-Configured Specialist Subagents
+JARVIS includes 11 specialized personas configured with optimal tools and system instructions:
+- **`academic`**: Thesis structuring, assignment literature reviews, CS lab reports, IEEE/APA citation formatting, grading rubric alignment.
+- **`marketing`**: Product launch copywriting, Product Hunt & Show HN distribution, social announcement strategy, technical SEO.
+- **`frontend`**: React 19, Next.js App Router, Tailwind CSS, Framer Motion, Remotion visual design, UI/UX Pro Max standards.
+- **`backend`**: Node.js/Express, REST/GraphQL design, Go concurrency, Kotlin multiplatform, SQLite/PostgreSQL architecture.
+- **`quality`**: Test-driven development (TDD), Vitest suite execution, systematic debugging, OWASP security reviews, Web Vitals auditing.
+- **`architecture`**: High-level system design, Socratic brainstorming, Excalidraw visual maps, Graphify knowledge networks, Vercel deployments.
+- **`research`**: Multi-source vault retrieval, Google Drive search, web provenance aggregation, synthetic summaries.
+- **`coding`**: General code refactoring, TypeScript type puzzles, lint resolution, modular file organization.
+- **`productivity`**: Google Calendar scheduling, morning briefings, meeting prep, daily agenda prioritization, loose-ends tracking.
+- **`memory`**: Long-term SQLite retrieval, Obsidian memory note synthesis, knowledge base querying.
+- **`communications`**: Gmail inbox search, correspondence drafting (`draft_email` only; sending strictly blocked).
+
+#### E. The Human Confirmation Safety Gate for Subagents
+- **Subagents Inherit Parent Boundaries**: Child agents have no elevated privileges.
+- **Write Interception**: If any child subagent initiates a write action (`write_document`, `create_note`, `draft_email`, `create_google_doc`), the action is immediately trapped by JARVIS's application-owned `ConfirmationService`.
+- A single-use cryptographic token (60-second TTL) is generated and rendered as a **Confirmation Card** in the browser. The subagent halts until the human explicitly clicks **Approve** or speaks approval.
+
+#### F. Real-Time Telemetry & Specialist Tree Card
+- As subagents execute in Python, SSE telemetry events (`subagent.start`, `subagent.complete`) stream to the browser in real time.
+- The CenterStage UI displays live animated chips indicating which specialist is currently active.
+- Upon completion, JARVIS synthesizes a structured **Specialist Team Card** showing:
+  - Each participating specialist's name and role icon.
+  - Exact execution duration in milliseconds.
+  - Number of tools executed by each subagent.
+  - Final deterministic completion status (`✓`).
+
 ---
 
 ## Verification & Quality Gates
@@ -369,10 +541,10 @@ f:\Jarvis\
 │       ├── shell/                # State machine & shell reducer
 │       ├── skills/               # Skill registry, markdown loader, semantic selector
 │       ├── specialist/           # Specialist registry, delegation policy, permission containment
-│       ├── tools/                # Application ToolRegistry & 17 tool definitions
+│       ├── tools/                # Application ToolRegistry & 21 registered tools
 │       ├── verification/         # Application-owned deterministic verification engine
 │       └── voice/                # Local Whisper and Kokoro client interfaces
-└── tests/                        # Vitest test suite (87 test files, 524 tests)
+└── tests/                        # Vitest test suite (100 test files, 612 tests)
 ```
 
 ---
@@ -386,6 +558,44 @@ f:\Jarvis\
 5. **Deterministic Verification Over Model Claims**: Model output asserting `"verified": true` is treated as unverified text. Actions are verified only through application-owned inspection of disk state, external IDs, and real filesystem artifacts.
 6. **No Arbitrary Shell Execution**: Tools execute with explicit argument arrays and `shell: false`. Arbitrary terminal/code execution tools in Hermes are verified to be permanently disabled.
 7. **Truthful Telemetry**: The UI never presents fake progress or hardcoded "connected" badges. If an integration is offline, it is honestly reported as `Unavailable`.
+
+---
+
+## Contributing & Open-Source Inspirations
+
+> *"JARVIS was forged through the inspiration, generosity, and brilliance of the open-source software and AI research communities. Feel free to contribute, fork, experiment, and make it your own!"*
+
+Contributions are warmly welcomed! Whether you are interested in expanding the specialist agent library, building new Obsidian skills, refining the cinematic visual HUD, optimizing local voice streaming latency, or hardening security policies, your ideas and PRs make JARVIS better for everyone.
+
+### How You Can Contribute
+
+1. **Add New Obsidian Skills**: Create a new folder under `Jarvis Memory/AI/Skills/<your-skill-name>/` with a `SKILL.md` file featuring structured YAML frontmatter and step-by-step instructions.
+2. **Add or Enhance Specialist Subagents**: Register new domain personas in `src/lib/specialist/registry.ts` and equip them with focused tools and skillsets.
+3. **Enhance Voice & Streaming (Phase 14)**: Help optimize the local Whisper STT streaming pipeline and Kokoro TTS speech overlap.
+4. **Cinematic HUD & Animations (Phase 22)**: Improve the CenterStage Mark-LIV reactive visualizer, audio reactive waveforms, and Framer Motion transitions.
+5. **Quality & Test Coverage**: Help maintain our strict quality standards by writing tests under `tests/` and ensuring `npm test`, `npm run lint`, and `npm run typecheck` pass cleanly.
+
+### Open-Source Inspirations & Attribution
+
+JARVIS stands on the shoulders of remarkable projects, communities, and creators:
+
+| Project / Creator | Core Inspiration & Technological Foundation |
+|---|---|
+| **Nous Research ([Hermes Agent](https://github.com/NousResearch))** | The state-of-the-art autonomous reasoning engine, multi-step tool execution loop, and native `delegate_task` child subagent architecture. |
+| **Obsidian ([Obsidian.md](https://obsidian.md))** | The local-first, plain-text Markdown philosophy empowering human-readable, portable, and permanent personal knowledge without cloud lock-in. |
+| **Georgi Gerganov ([whisper.cpp](https://github.com/ggerganov/whisper.cpp))** | Blazing-fast, ultra-efficient C/C++ offline speech recognition running locally with zero cloud dependencies or privacy leaks. |
+| **Hexgrad ([Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M))** | The remarkably natural, lightweight 82M-parameter neural text-to-speech model bringing warm, fluid voice synthesis to personal computing. |
+| **Browser-Use ([browser-use/browser-use](https://github.com/browser-use/browser-use))** | Visionary browser automation architecture inspiring JARVIS's upcoming sandboxed web subagents in Phase 17. |
+| **Obra ([@obra](https://github.com/obra))** | Software engineering superpowers, test-driven development (TDD) discipline, systematic debugging, and evidence-first verification. |
+| **Matt Pocock ([Total TypeScript](https://www.totaltypescript.com))** | Advanced TypeScript patterns, deep type safety, and zero-compromise type ergonomics. |
+| **Addy Osmani ([Web Quality](https://addyosmani.com))** | Web performance optimization, Core Web Vitals, and accessibility quality gates. |
+| **Shawnchee ([Caveman Mode](https://github.com/Shawnchee))** | Ultra-dense, token-saving, zero-fluff communication protocols for lightning-fast scanning. |
+| **Blader ([Humanizer](https://github.com/blader))** | Natural writing cadences that eliminate robotic tropes and repetitive AI cadence. |
+| **NextLevelBuilder ([UI/UX Pro Max](https://github.com/nextlevelbuilder))** | World-class visual hierarchy, HSL tailored color systems, glassmorphic styling, and fluid motion design. |
+| **Coleam00 ([Excalidraw Skills](https://github.com/coleam00))** | Programmatic diagramming and visual architecture schematics using clean JSON and visual layout principles. |
+| **Remotion ([Remotion.dev](https://www.remotion.dev))** | Programmatic React-driven motion graphics, audio sync, and canvas rendering pipelines. |
+| **Vercel Engineering & Next.js Team** | The Next.js 16+ App Router, Server Components architecture, and Turbopack bundler. |
+| **Marvel Cinematic Universe (MCU)** | Tony Stark's J.A.R.V.I.S. (Just A Rather Very Intelligent System) — the timeless dream of an elegant, capable, loyal personal AI companion. |
 
 ---
 
