@@ -101,7 +101,7 @@ The system enforces strict boundaries between product experience, agent reasonin
 
 JARVIS was engineered across two foundational eras:
 1. **The Ground-Up Construction (Phases 1–12)**: How JARVIS was designed, architected, and built from an empty repository into a fully functioning, local-first operating assistant.
-2. **The Modern Subagent & Intelligence Era (Updated Prompts Phases 01–25)**: How JARVIS migrated to the Nous Hermes multi-agent core, specialist child delegations, advanced memory retrieval, controlled learning, and file intelligence.
+2. **The Modern Subagent & Intelligence Era (Phases 01–25)**: How JARVIS migrated to the Nous Hermes multi-agent core, specialist child delegations, advanced memory retrieval, controlled learning, and file intelligence.
 
 ---
 
@@ -125,7 +125,7 @@ JARVIS was engineered across two foundational eras:
 
 ---
 
-### Part 2: The Modern Evolutionary Upgrades (Updated Prompts Phases 01–25)
+### Part 2: The Modern Evolutionary Upgrades (Phases 01–25)
 
 | Phase | Milestone | Status | Key Deliverables & Verified Behavior |
 |---|---|---|---|
@@ -501,17 +501,12 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ```text
 f:\Jarvis\
-├── Updated Prompts/              # 25-Phase implementation prompts & specifications (v11)
-│   ├── MASTER_RULES.md           # Binding rules for scope, security, and verification
-│   ├── UI_GUIDE.md               # Binding UX/UI live control center guidelines
-│   ├── START_HERE.md             # Execution entry point
-│   ├── PRE_PHASE_04_VERIFY.md    # Verification gate for Phases 1–3
-│   └── PHASE_01.md - PHASE_25.md # Granular step-by-step phase specifications
 ├── docs/                         # Architecture, roadmap, and alignment specifications
 ├── public/                       # Static assets and icons
 ├── scripts/                      # Verification and test runners
 │   ├── verify-hermes-live.ts     # Live Hermes client and capabilities verification
 │   └── verify-phase3-live.ts     # End-to-end tool execution & confirmation test suite
+├── skills/                       # Procedural skill workflows (morning-briefing, research, etc.)
 ├── src/
 │   ├── app/                      # Next.js App Router
 │   │   ├── api/agent/            # Agent runtime, streaming, confirmation, provider APIs

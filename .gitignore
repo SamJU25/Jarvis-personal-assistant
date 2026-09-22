@@ -62,3 +62,9 @@ next-env.d.ts
 # Personal Obsidian vault (user notes/memory — never committed)
 /Jarvis Memory/
 
+# Local agent environments, skill caches & raw prompt files (kept local)
+/.agents/
+/.commandcode/
+/Updated Prompts/
+JARVIS_MASTER_PROMPT.md
+CLAUDE.md
